@@ -1,24 +1,32 @@
 {
   "name": "openrag",
   "version": "1.0.0",
-  "description": "",
+  "description": "OpenRAG — Africa's Distributed AI Infrastructure. Resource Credit System powered by Cowries.",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "client": "node client.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "ai",
+    "distributed",
+    "africa",
+    "infrastructure",
+    "cowries",
+    "openrag",
+    "resource-credits"
+  ],
+  "author": "Stack Core Systems / Media First",
+  "license": "MIT",
   "type": "commonjs",
   "dependencies": {
-    "@roamhq/wrtc": "^0.10.0",
-    "cheerio": "^1.2.0",
     "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
-    "simple-peer": "^9.11.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
     "socket.io": "^4.8.3",
-    "socket.io-client": "^4.8.3"
+    "socket.io-client": "^4.8.3",
+    "simple-peer": "^9.11.1",
+    "@roamhq/wrtc": "^0.10.0"
   }
 }
