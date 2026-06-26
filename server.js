@@ -109,7 +109,7 @@ let developers = {};
 // ==========================================
 // 5. أنظمة الحماية (Rate Limiting & Validation)
 // ==========================================
-const taskTracker = new Map(); // منع الاستغلال ( flooding)
+const taskTracker = new Map(); // منع الاستغلال (flooding)
 
 // تنظيف ذاكرة التتبع كل 10 دقائق
 setInterval(() => {
