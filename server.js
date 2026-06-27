@@ -57,10 +57,19 @@ function trimRecords() {
 }
 
 // ==========================================
-// Socket Logic — Simplified (No WebRTC)
+// Socket Logic — مع دعم المراقب
 // ==========================================
 io.on('connection', async (socket) => {
     console.log(`⚡ [Network] New connection: ${socket.id}`);
+
+    // ✅ إرسال الإحصائيات فوراً للمراقبين (وكل المتصلين)
+    socket.emit('STATS_UPDATE', mockDB.stats);
+
+    // ✅ تحديث دوري كل 3 ثوانٍ للمراقبين
+    const statsInterval = setInterval(() => {
+        socket.emit('STATS_UPDATE', mockDB.stats);
+    }, 3000);
+
     const apiKey = socket.handshake.auth.token;
 
     // Developer Auth
@@ -68,6 +77,7 @@ io.on('connection', async (socket) => {
         const client = mockDB.api_clients[apiKey];
         if (!client || client.balance_usd <= 0) {
             socket.emit('ERROR', { msg: "Authentication Failed" });
+            clearInterval(statsInterval);
             return socket.disconnect();
         }
         developers[socket.id] = client;
@@ -97,7 +107,7 @@ io.on('connection', async (socket) => {
         console.log(`📱 Worker: ${wallet}`);
     });
 
-    // Find Node & Execute Task (Direct via Server)
+    // Find Node & Execute Task
     socket.on('FIND_NODE', () => {
         if (!developers[socket.id]) {
             return socket.emit('ERROR', { msg: "Auth required" });
@@ -113,7 +123,6 @@ io.on('connection', async (socket) => {
         
         console.log(`🔄 Task assigned to: ${workerWallet}`);
 
-        // Execute task directly via server relay
         io.to(targetId).emit('EXECUTE_TASK', { 
             sender: socket.id,
             sizeBytes: 15 * 1024 * 1024,
@@ -130,16 +139,13 @@ io.on('connection', async (socket) => {
         
         if (!workerWallet || workerWallet.startsWith("Guest")) return;
 
-        // Simulate processing
         setTimeout(() => {
-            // Send result back to developer
             io.to(sender).emit('TASK_RESULT', {
                 worker: workerWallet,
                 result: "200_OK_RAG_PROCESSED",
                 taskId
             });
 
-            // Calculate Cowries
             const sizeMB = sizeBytes / (1024 * 1024);
             const totalCost = sizeMB * PRICE_PER_MB_USD;
             const workerReward = totalCost * WORKER_SHARE;
@@ -154,7 +160,7 @@ io.on('connection', async (socket) => {
                     earned: cowriesEarned
                 });
                 
-                socket.emit('STATS_UPDATE', mockDB.stats);
+                io.emit('STATS_UPDATE', mockDB.stats);
 
                 mockDB.transactions.push({
                     wallet_id: workerWallet,
@@ -165,15 +171,17 @@ io.on('connection', async (socket) => {
 
                 console.log(`🪙 +${cowriesEarned} Cowries to ${workerWallet}`);
             }
-        }, 2000); // 2 seconds processing time
+        }, 2000);
     });
 
     // Disconnect
     socket.on('disconnect', () => {
+        clearInterval(statsInterval);
         delete workers[socket.id];
         delete developers[socket.id];
         taskTracker.delete(socket.id);
         mockDB.stats.activeNodes = Object.keys(workers).length;
+        io.emit('STATS_UPDATE', mockDB.stats);
         console.log(`🔌 Disconnected: ${socket.id}`);
     });
 });
