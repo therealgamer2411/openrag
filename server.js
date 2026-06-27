@@ -17,7 +17,6 @@ const io = new Server(server, {
     pingInterval: 25000
 });
 
-// Mock DB
 const mockDB = {
     api_clients: {},
     users: {}, 
@@ -32,7 +31,6 @@ mockDB.api_clients[DEFAULT_DEV_KEY] = {
     balance_usd: 100.00 
 };
 
-// Economy
 const PRICE_PER_MB_USD = 0.004; 
 const WORKER_SHARE = 0.25;
 const COWRIES_PER_DOLLAR = 1000;
@@ -41,7 +39,6 @@ let workers = {};
 let developers = {}; 
 const taskTracker = new Map();
 
-// Rate limiting cleanup
 setInterval(() => {
     const now = Date.now();
     const cutoff = now - (5 * 60 * 1000);
@@ -56,23 +53,17 @@ function trimRecords() {
     }
 }
 
-// ==========================================
-// Socket Logic — مع دعم المراقب
-// ==========================================
 io.on('connection', async (socket) => {
     console.log(`⚡ [Network] New connection: ${socket.id}`);
 
-    // ✅ إرسال الإحصائيات فوراً للمراقبين (وكل المتصلين)
     socket.emit('STATS_UPDATE', mockDB.stats);
 
-    // ✅ تحديث دوري كل 3 ثوانٍ للمراقبين
     const statsInterval = setInterval(() => {
         socket.emit('STATS_UPDATE', mockDB.stats);
     }, 3000);
 
     const apiKey = socket.handshake.auth.token;
 
-    // Developer Auth
     if (apiKey) {
         const client = mockDB.api_clients[apiKey];
         if (!client || client.balance_usd <= 0) {
@@ -84,7 +75,6 @@ io.on('connection', async (socket) => {
         console.log(`👨‍💻 Developer: ${client.email}`);
     }
 
-    // Worker Registration
     socket.on('REGISTER_WORKER', (data) => {
         let wallet = data?.wallet || "Guest_" + socket.id.substring(0, 5);
         wallet = wallet.trim();
@@ -107,7 +97,6 @@ io.on('connection', async (socket) => {
         console.log(`📱 Worker: ${wallet}`);
     });
 
-    // Find Node & Execute Task
     socket.on('FIND_NODE', () => {
         if (!developers[socket.id]) {
             return socket.emit('ERROR', { msg: "Auth required" });
@@ -132,7 +121,6 @@ io.on('connection', async (socket) => {
         socket.emit('TASK_SENT', { targetId, wallet: workerWallet });
     });
 
-    // Worker executes task
     socket.on('EXECUTE_TASK', (data) => {
         const { sender, sizeBytes, taskId } = data;
         const workerWallet = workers[socket.id];
@@ -174,7 +162,6 @@ io.on('connection', async (socket) => {
         }, 2000);
     });
 
-    // Disconnect
     socket.on('disconnect', () => {
         clearInterval(statsInterval);
         delete workers[socket.id];
@@ -186,7 +173,6 @@ io.on('connection', async (socket) => {
     });
 });
 
-// Graceful Shutdown
 process.on('SIGTERM', () => {
     io.close(() => server.close(() => process.exit(0)));
 });
