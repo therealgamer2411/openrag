@@ -23,10 +23,7 @@ const io = new Server(server, {
 // ==========================================
 // 2. قاعدة البيانات المحلية (In-Memory Mock DB للتجربة المجانية)
 // ==========================================
-// NOTE: هذه نسخة تجريبية مجانية (Free Tier). 
-// الإصدار الإنتاجي يستخدم قاعدة بيانات موزعة حقيقية.
-
-const MAX_MEMORY_RECORDS = 5000; // حماية من Memory Leak
+const MAX_MEMORY_RECORDS = 5000;
 
 const mockDB = {
     api_clients: {},
@@ -34,7 +31,6 @@ const mockDB = {
     transactions: []
 };
 
-// تهيئة مفتاح المطور من البيئة
 const DEFAULT_DEV_KEY = process.env.DEV_API_KEY || "dev_key_local_only";
 if (process.env.DEV_API_KEY) {
     mockDB.api_clients[process.env.DEV_API_KEY] = { 
@@ -56,12 +52,12 @@ if (process.env.DEV_API_KEY) {
 const METERED_API_KEY = process.env.METERED_API_KEY;
 
 if (!METERED_API_KEY) {
-    console.warn("[!] Warning: METERED_API_KEY not found in environment. P2P tunneling may fail.");
+    console.warn("[!] Warning: METERED_API_KEY not found in environment.");
 }
 
 let cachedIceServers = null;
 let lastIceFetchTime = 0;
-const ICE_CACHE_DURATION = 1000 * 60 * 60 * 6; // تحديث كل 6 ساعات
+const ICE_CACHE_DURATION = 1000 * 60 * 60 * 6;
 
 async function getIceServers() {
     const NOW = Date.now();
@@ -93,25 +89,18 @@ async function getIceServers() {
 // ==========================================
 // 4. المحرك الاقتصادي — عملة الكاوري (Cowries)
 // ==========================================
-// الكاوري: وحدة ائتمان حاسوبية مستوحاة من أول عملة أفريقية (Cowrie Shells).
-// ليست عملة رقمية للمضاربة، بل رصيد داخلي لتبادل الموارد الحاسوبية.
-// 
-// القاعدة: أساهم بموارد → أربح كاوري → أستهلك موارد من الشبكة.
-// لا يوجد صرف نقدي. القيمة تدور داخل أفريقيا.
-
 const PRICE_PER_MB_USD = 0.004; 
-const WORKER_SHARE = 0.25; // نسبة العامل من المعالجة
-const COWRIES_PER_DOLLAR = 1000; // 1 USD = 1000 كاوري 🐚
+const WORKER_SHARE = 0.25;
+const COWRIES_PER_DOLLAR = 1000;
 
 let workers = {}; 
 let developers = {}; 
 
 // ==========================================
-// 5. أنظمة الحماية (Rate Limiting & Validation)
+// 5. أنظمة الحماية
 // ==========================================
-const taskTracker = new Map(); // منع الاستغلال (flooding)
+const taskTracker = new Map();
 
-// تنظيف ذاكرة التتبع كل 10 دقائق
 setInterval(() => {
     const now = Date.now();
     const cutoff = now - (5 * 60 * 1000);
@@ -120,7 +109,6 @@ setInterval(() => {
     }
 }, 60000);
 
-// حماية من Memory Leak
 function trimRecords() {
     if (mockDB.transactions.length > MAX_MEMORY_RECORDS) {
         mockDB.transactions = mockDB.transactions.slice(-MAX_MEMORY_RECORDS / 2);
@@ -133,7 +121,7 @@ function trimRecords() {
 io.on('connection', async (socket) => {
     console.log(`⚡ [Network] New connection detected: ${socket.id}`);
 
-    // 🔥 الحل الجذري: تسجيل أوامر الاستماع (Listeners) فوراً قبل أي عملية (await)
+    // 🔥 تسجيل Listeners فوراً قبل أي await
     
     // ------------------------------------------
     // تسجيل العقدة / العامل (Worker Registration)
@@ -185,20 +173,19 @@ io.on('connection', async (socket) => {
         }
     });
 
-    // تمرير إشارات WebRTC بين العقد لفتح نفق P2P
+    // تمرير إشارات WebRTC بين العقد
     socket.on('SIGNAL', (data) => {
         if (!data || !data.target || !data.signal) return;
         io.to(data.target).emit('SIGNAL', { sender: socket.id, signal: data.signal });
     });
 
     // ------------------------------------------
-    // المحاسبة وإصدار عملة الكاوري (Task Completed)
+    // المحاسبة وإصدار الكاوري (Task Completed)
     // ------------------------------------------
     socket.on('TASK_COMPLETED', (data) => {
         const { sizeBytes } = data;
         const workerWallet = workers[socket.id]; 
         
-        // ✅ التحقق من صحة البيانات
         if (typeof sizeBytes !== 'number' || sizeBytes <= 0 || sizeBytes > (50 * 1024 * 1024)) {
             console.log(`🚨 [Security] Invalid Task Payload from ${socket.id}`);
             return;
@@ -206,7 +193,7 @@ io.on('connection', async (socket) => {
 
         if (!workerWallet || workerWallet.startsWith("Guest")) return;
 
-        // ✅ Rate Limiting: منع الإغراق (max 1 مهمة كل 3 ثوانٍ)
+        // Rate Limiting
         const now = Date.now();
         const lastTask = taskTracker.get(socket.id);
         if (lastTask && (now - lastTask) < 3000) {
@@ -218,13 +205,10 @@ io.on('connection', async (socket) => {
         const sizeMB = sizeBytes / (1024 * 1024);
         const totalCost = sizeMB * PRICE_PER_MB_USD; 
         const workerReward = totalCost * WORKER_SHARE;
-        
-        // حساب الكاوري المكتسب 🐚
         const cowriesEarned = Math.floor(workerReward * COWRIES_PER_DOLLAR);
 
         if (cowriesEarned <= 0) return;
 
-        // تحديث الرصيد
         if (mockDB.users[workerWallet]) {
             mockDB.users[workerWallet].cowries_balance += cowriesEarned;
             
@@ -240,29 +224,22 @@ io.on('connection', async (socket) => {
                 created_at: new Date()
             });
 
-            trimRecords(); // ✅ حماية من Memory Leak
+            trimRecords();
 
             console.log(`🪙 [Economy] +${cowriesEarned} Cowries to ${workerWallet}. Total: ${mockDB.users[workerWallet].cowries_balance}`);
         }
     });
 
-    // ------------------------------------------
-    // ❌ تم إلغاء REDEEM_REQUEST — الكاوري داخلي بحت
-    // ------------------------------------------
-    // الكاوري ليست عملة قابلة للصرف النقدي.
-    // هي وحدة موارد: أساهم → أربح → أستهلك.
-    // القيمة تدور داخل الشبكة، لا تخرج منها.
-
-    // تنظيف العقدة عند قطع الاتصال
+    // تنظيف عند قطع الاتصال
     socket.on('disconnect', () => {
         console.log(`🔌 [Grid] Node Disconnected: ${socket.id}`);
         delete workers[socket.id];
         delete developers[socket.id];
-        taskTracker.delete(socket.id); // ✅ تنظيف Rate Limiter
+        taskTracker.delete(socket.id);
     });
 
     // ------------------------------------------
-    // ⏳ بعد تأمين الـ Listeners، نقوم بجلب البيانات والتحقق من الهوية
+    // ⏳ بعد تأمين الـ Listeners، نجلب البيانات ونتحقق من الهوية
     // ------------------------------------------
     const iceServers = await getIceServers();
     const apiKey = socket.handshake.auth.token;
@@ -280,12 +257,11 @@ io.on('connection', async (socket) => {
         console.log(`👨‍💻 [Grid] Developer Ready: ${client.email}`);
     }
 
-    // إرسال الإعدادات بعد نجاح التحقق
     socket.emit('CONFIG', { iceServers });
 });
 
 // ==========================================
-// 7. إغلاق أنيق (Graceful Shutdown)
+// 7. Graceful Shutdown
 // ==========================================
 process.on('SIGTERM', () => {
     console.log('\n[!] SIGTERM received. Shutting down gracefully...');
