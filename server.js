@@ -23,7 +23,7 @@ const mockDB = {
     api_clients: {},
     users: {}, 
     transactions: [],
-    stats: { totalCowries: 0, activeNodes: 0 }  
+    stats: { totalCowries: 0, activeNodes: 0 }
 };
 
 const DEFAULT_DEV_KEY = process.env.DEV_API_KEY || "dev_key_local_only";
@@ -42,7 +42,6 @@ if (process.env.DEV_API_KEY) {
 }
 
 const METERED_API_KEY = process.env.METERED_API_KEY;
-
 if (!METERED_API_KEY) {
     console.warn("[!] Warning: METERED_API_KEY not found in environment.");
 }
@@ -56,9 +55,7 @@ async function getIceServers() {
     if (cachedIceServers && (NOW - lastIceFetchTime < ICE_CACHE_DURATION)) {
         return cachedIceServers;
     }
-    if (!METERED_API_KEY) {
-        return [];
-    }
+    if (!METERED_API_KEY) return [];
     try {
         const response = await fetch(`https://openrag-grid.metered.live/api/v1/turn/credentials?apiKey=${METERED_API_KEY}`);
         const iceServers = await response.json();
@@ -84,7 +81,6 @@ const COWRIES_PER_DOLLAR = 1000;
 
 let workers = {}; 
 let developers = {}; 
-
 const taskTracker = new Map();
 
 setInterval(() => {
@@ -101,10 +97,17 @@ function trimRecords() {
     }
 }
 
+setInterval(() => {
+    io.emit('STATS_UPDATE', mockDB.stats);
+    console.log(`📊 [Broadcast] Nodes: ${mockDB.stats.activeNodes}, Cowries: ${mockDB.stats.totalCowries}`);
+}, 3000);
+
 io.on('connection', async (socket) => {
     console.log(`⚡ [Network] New connection detected: ${socket.id}`);
 
-    socket.emit('STATS_UPDATE', mockDB.stats);
+    setTimeout(() => {
+        socket.emit('STATS_UPDATE', mockDB.stats);
+    }, 500);
 
     socket.on('REGISTER_WORKER', (data) => {
         let wallet = data?.wallet;
@@ -124,7 +127,7 @@ io.on('connection', async (socket) => {
         }
 
         workers[socket.id] = wallet;
-        mockDB.stats.activeNodes = Object.keys(workers).length;  
+        mockDB.stats.activeNodes = Object.keys(workers).length;
         
         console.log(`📱 [Grid] Worker Node Ready: ${socket.id} | Wallet: ${wallet}`);
         
@@ -146,8 +149,18 @@ io.on('connection', async (socket) => {
         const ids = Object.keys(workers);
         if (ids.length > 0) {
             const target = ids[Math.floor(Math.random() * ids.length)];
+            const workerWallet = workers[target];
+            const taskId = Date.now();
+            
             console.log(`🔄 [Routing] Assigned task to Worker: ${target}`);
-            socket.emit('NODE_FOUND', { targetId: target });
+
+            io.to(target).emit('EXECUTE_TASK', { 
+                sender: socket.id,
+                sizeBytes: 15 * 1024 * 1024,
+                taskId: taskId
+            });
+
+            socket.emit('TASK_SENT', { targetId: target, wallet: workerWallet });
         } else {
             console.log(`⚠️ [Routing] No OpenRAG Nodes available.`);
             socket.emit('ERROR', { msg: "No OpenRAG Nodes available in the grid." });
@@ -160,7 +173,7 @@ io.on('connection', async (socket) => {
     });
 
     socket.on('TASK_COMPLETED', (data) => {
-        const { sizeBytes } = data;
+        const { sender, sizeBytes, taskId } = data;
         const workerWallet = workers[socket.id]; 
         
         if (typeof sizeBytes !== 'number' || sizeBytes <= 0 || sizeBytes > (50 * 1024 * 1024)) {
@@ -170,6 +183,7 @@ io.on('connection', async (socket) => {
 
         if (!workerWallet || workerWallet.startsWith("Guest")) return;
 
+        // Rate Limiting
         const now = Date.now();
         const lastTask = taskTracker.get(socket.id);
         if (lastTask && (now - lastTask) < 3000) {
@@ -187,7 +201,7 @@ io.on('connection', async (socket) => {
 
         if (mockDB.users[workerWallet]) {
             mockDB.users[workerWallet].cowries_balance += cowriesEarned;
-            mockDB.stats.totalCowries += cowriesEarned;  
+            mockDB.stats.totalCowries += cowriesEarned;
             
             socket.emit('BALANCE_UPDATE', { 
                 balance: mockDB.users[workerWallet].cowries_balance, 
@@ -207,6 +221,14 @@ io.on('connection', async (socket) => {
 
             console.log(`🪙 [Economy] +${cowriesEarned} Cowries to ${workerWallet}. Total: ${mockDB.users[workerWallet].cowries_balance}`);
         }
+
+        if (sender && io.sockets.sockets.get(sender)) {
+            io.to(sender).emit('TASK_RESULT', {
+                worker: workerWallet,
+                result: "200_OK_RAG_PROCESSED",
+                taskId: taskId
+            });
+        }
     });
 
     socket.on('disconnect', () => {
@@ -219,9 +241,6 @@ io.on('connection', async (socket) => {
         io.emit('STATS_UPDATE', mockDB.stats);
     });
 
-    // ------------------------------------------
-    // ⏳ بعد تأمين الـ Listeners، نجلب البيانات ونتحقق من الهوية
-    // ------------------------------------------
     const iceServers = await getIceServers();
     const apiKey = socket.handshake.auth.token;
     
