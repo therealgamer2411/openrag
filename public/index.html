@@ -1,541 +1,220 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OpenRAG Sovereign Grid</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/simple-peer/9.11.1/simplepeer.min.js"></script>
+    <title>OpenRAG Grid</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
-        :root { 
-            --bg: #0d1117; 
-            --primary: #00ff9d; 
-            --dev: #58a6ff; 
-            --text: #c9d1d9; 
-            --panel: #161b22; 
-            --cowrie: #f2cc60; 
-            --danger: #f85149;
-        }
-        body { 
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
-            background-color: var(--bg); 
-            color: var(--text); 
-            margin: 0; 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            min-height: 100vh; 
-        }
-        .container { 
-            width: 100%; 
-            max-width: 500px; 
-            background: var(--panel); 
-            border: 1px solid #30363d; 
-            border-radius: 12px; 
-            padding: 30px; 
-            box-sizing: border-box; 
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8); 
-        }
-        h1 { 
-            text-align: center; 
-            color: white; 
-            margin-top: 0; 
-            font-size: 1.8rem; 
-        }
-        .subtitle {
-            text-align: center;
-            color: #8b949e;
-            font-size: 0.9rem;
-            margin-bottom: 20px;
-        }
-        
-        /* شاشة اختيار الدور */
-        #role-selector { 
-            display: flex; 
-            gap: 15px; 
-            margin-top: 20px; 
-            flex-direction: column;
-        }
-        .role-btn { 
-            padding: 20px; 
-            border: none; 
-            border-radius: 8px; 
-            font-size: 1.1rem; 
-            font-weight: bold; 
-            cursor: pointer; 
-            transition: 0.3s; 
-            text-align: left;
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-        .dev-btn { 
-            background: #1f6feb; 
-            color: white; 
-        }
-        .dev-btn:hover { 
-            background: var(--dev); 
-        }
-        .worker-btn { 
-            background: #238636; 
-            color: white; 
-        }
-        .worker-btn:hover { 
-            background: var(--primary); 
-            color: black; 
-        }
-        .guest-btn {
-            background: #6e7681;
-            color: white;
-        }
-        .guest-btn:hover {
-            background: #8b949e;
-            color: black;
-        }
-
-        /* الشاشات الداخلية */
-        .dashboard { 
-            display: none; 
-        }
-        .status { 
-            text-align: center; 
-            font-size: 0.9em; 
-            margin-bottom: 20px; 
-            color: #8b949e; 
-        }
-        .status span { 
-            font-weight: bold; 
-        }
-        
-        /* البطاقات الاقتصادية (محفظة الكاوري) */
-        .wallet-card { 
-            background: #0d1117; 
-            border: 1px solid #30363d; 
-            border-radius: 8px; 
-            padding: 20px; 
-            text-align: center; 
-            margin-bottom: 20px; 
-            position: relative; 
-            overflow: hidden; 
-        }
-        .balance { 
-            font-size: 3rem; 
-            margin: 0; 
-            font-weight: bold; 
-        }
-        .balance.cowries { 
-            color: var(--cowrie); 
-            text-shadow: 0 0 15px rgba(242, 204, 96, 0.3); 
-        }
-        .balance.budget { 
-            color: var(--dev); 
-        }
-        
-        /* تأثير زيادة الرصيد */
-        @keyframes flashGold { 
-            0% { background-color: rgba(242, 204, 96, 0.4); } 
-            100% { background-color: transparent; } 
-        }
-        .flash { 
-            animation: flashGold 1s ease-out; 
-        }
-        
-        /* الأزرار */
-        .action-btn { 
-            width: 100%; 
-            padding: 15px; 
-            border: none; 
-            border-radius: 6px; 
-            font-size: 1.1rem; 
-            font-weight: bold; 
-            cursor: pointer; 
-            transition: 0.2s; 
-        }
-        .btn-dev { 
-            background: var(--dev); 
-            color: white; 
-        }
-        .btn-worker { 
-            background: var(--primary); 
-            color: black; 
-        }
-        .action-btn:disabled { 
-            background: #30363d; 
-            color: #8b949e; 
-            cursor: not-allowed; 
-        }
-        
-        /* شاشة المراقبة (اللوج) */
-        .terminal { 
-            background: #000; 
-            border: 1px solid #30363d; 
-            border-radius: 6px; 
-            padding: 15px; 
-            height: 180px; 
-            overflow-y: auto; 
-            margin-top: 20px; 
-            font-size: 0.85rem; 
-            line-height: 1.5; 
-            font-family: monospace; 
-        }
-        .log-success { 
-            color: var(--primary); 
-        }
-        .log-warn { 
-            color: var(--cowrie); 
-        }
-        .log-dev { 
-            color: var(--dev); 
-        }
-        .log-error {
-            color: var(--danger);
-        }
-        
-        /* إدخال المفتاح */
-        .key-input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #30363d;
-            border-radius: 6px;
-            background: #0d1117;
-            color: var(--text);
-            font-family: monospace;
-            margin-bottom: 15px;
-            box-sizing: border-box;
-        }
-        .key-input:focus {
-            outline: none;
-            border-color: var(--dev);
-        }
-        .hint {
-            font-size: 0.8rem;
-            color: #8b949e;
-            margin-bottom: 15px;
-        }
-        
-        /* معلومات الكاوري */
-        .cowrie-info {
-            background: rgba(242, 204, 96, 0.1);
-            border: 1px solid rgba(242, 204, 96, 0.3);
-            border-radius: 6px;
-            padding: 12px;
-            margin-bottom: 20px;
-            font-size: 0.85rem;
-        }
-        .cowrie-info strong {
-            color: var(--cowrie);
-        }
+        :root { --bg: #0d1117; --primary: #00ff9d; --dev: #58a6ff; --text: #c9d1d9; --panel: #161b22; --cowrie: #f2cc60; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { width: 100%; max-width: 500px; background: var(--panel); border: 1px solid #30363d; border-radius: 12px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        h1 { text-align: center; color: white; margin-top: 0; }
+        .subtitle { text-align: center; color: #8b949e; font-size: 0.9rem; margin-bottom: 20px; }
+        #role-selector { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; }
+        .role-btn { padding: 20px; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .dev-btn { background: #1f6feb; color: white; }
+        .worker-btn { background: #238636; color: white; }
+        .guest-btn { background: #6e7681; color: white; }
+        .dashboard { display: none; }
+        .status { text-align: center; font-size: 0.9em; margin-bottom: 20px; color: #8b949e; }
+        .wallet-card { background: #0d1117; border: 1px solid #30363d; border-radius: 8px; padding: 20px; text-align: center; margin-bottom: 20px; }
+        .balance { font-size: 3rem; margin: 0; font-weight: bold; }
+        .balance.cowries { color: var(--cowrie); }
+        .balance.budget { color: var(--dev); }
+        .action-btn { width: 100%; padding: 15px; border: none; border-radius: 6px; font-size: 1.1rem; font-weight: bold; cursor: pointer; }
+        .btn-dev { background: var(--dev); color: white; }
+        .btn-worker { background: var(--primary); color: black; }
+        .action-btn:disabled { background: #30363d; color: #8b949e; cursor: not-allowed; }
+        .terminal { background: #000; border: 1px solid #30363d; border-radius: 6px; padding: 15px; height: 180px; overflow-y: auto; margin-top: 20px; font-size: 0.85rem; font-family: monospace; }
+        .log-success { color: var(--primary); }
+        .log-warn { color: var(--cowrie); }
+        .log-error { color: #f85149; }
+        .key-input { width: 100%; padding: 12px; border: 1px solid #30363d; border-radius: 6px; background: #0d1117; color: var(--text); font-family: monospace; margin-bottom: 15px; box-sizing: border-box; }
+        .stats { display: flex; justify-content: space-around; margin-bottom: 20px; }
+        .stat-box { text-align: center; }
+        .stat-value { font-size: 2rem; font-weight: bold; color: var(--primary); }
+        .stat-label { font-size: 0.8rem; color: #8b949e; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>🌍 OpenRAG Grid</h1>
-        <div class="subtitle">Africa's Distributed AI Infrastructure</div>
-        
-        <div id="role-selector">
-            <div class="cowrie-info">
-                <strong>🐚 What are Cowries?</strong><br>
-                Cowries are <strong>resource credits</strong> — not cash. 
-                Inspired by Africa's first currency, they measure your contribution 
-                to the network and unlock access to AI compute power. 
-                <strong>No cash redemption. Pure resource exchange.</strong>
-            </div>
-            
-            <button class="role-btn dev-btn" onclick="showDevLogin()">
-                👨‍💻 Enter as Institution / Developer
-            </button>
-            <button class="role-btn worker-btn" onclick="initApp('worker')">
-                📱 Enter as Compute Node
-            </button>
-            <button class="role-btn guest-btn" onclick="initApp('guest')">
-                👁️ Enter as Observer
-            </button>
-        </div>
-
-        <!-- شاشة تسجيل دخول المطور -->
-        <div id="dev-login" class="dashboard">
-            <div class="status">Role: <span style="color:var(--dev)">Institution / Initiator</span></div>
-            <div class="hint">Enter your API Key to access the grid:</div>
-            <input type="text" id="dev-key-input" class="key-input" placeholder="Paste your API Key here..." value="Africa_Grid_Secret_Key_2026_xyz">
-            <button class="action-btn btn-dev" onclick="initApp('developer')">🔐 Connect to Federation Core</button>
-            <button class="action-btn" style="margin-top:10px;background:#30363d;color:#8b949e;" onclick="backToRole()">← Back</button>
-        </div>
-
-        <!-- لوحة المطور -->
-        <div id="dev-dashboard" class="dashboard">
-            <div class="status">
-                Role: <span style="color:var(--dev)">Institution / Initiator</span> | 
-                Status: <span id="dev-status">Connecting...</span>
-            </div>
-            <div class="wallet-card">
-                <h3 style="margin:0 0 10px 0; color:#8b949e;">Compute Budget (Cowries) 🐚</h3>
-                <p class="balance budget" id="dev-balance">5000</p>
-                <div style="font-size:0.8rem;color:#8b949e;">Demo Mode — In-Memory Only</div>
-            </div>
-            <button id="dev-btn" class="action-btn btn-dev" onclick="deployWorkload()" disabled>
-                🚀 Deploy AI Workload (15MB)
-            </button>
-            <div class="terminal" id="dev-terminal"></div>
-            <button class="action-btn" style="margin-top:10px;background:#30363d;color:#8b949e;" onclick="location.reload()">🔄 Switch Role</button>
-        </div>
-
-        <!-- لوحة العامل -->
-        <div id="worker-dashboard" class="dashboard">
-            <div class="status">
-                Role: <span style="color:var(--primary)">Edge Compute Node</span> | 
-                Status: <span id="worker-status">Connecting...</span>
-            </div>
-            <div class="wallet-card" id="worker-wallet">
-                <h3 style="margin:0 0 10px 0; color:#8b949e;">Cowries Earned 🐚</h3>
-                <p class="balance cowries" id="worker-balance">0</p>
-                <div style="font-size:0.8rem;color:#8b949e;">Resource Credits — Not Cash</div>
-            </div>
-            <button id="worker-btn" class="action-btn btn-worker" disabled>
-                ⏳ Listening for Grid Tasks...
-            </button>
-            <div class="terminal" id="worker-terminal"></div>
-            <button class="action-btn" style="margin-top:10px;background:#30363d;color:#8b949e;" onclick="location.reload()">🔄 Switch Role</button>
-        </div>
-
-        <!-- لوحة الضيف -->
-        <div id="guest-dashboard" class="dashboard">
-            <div class="status">
-                Role: <span style="color:#8b949e">Observer</span> | 
-                Status: <span id="guest-status">Viewing Grid Status...</span>
-            </div>
-            <div class="wallet-card">
-                <h3 style="margin:0 0 10px 0; color:#8b949e;">Grid Overview</h3>
-                <p style="font-size:1.2rem;">Active Nodes: <span id="guest-nodes" style="color:var(--primary)">0</span></p>
-                <p style="font-size:1.2rem;">Total Cowries Circulated: <span id="guest-cowries" style="color:var(--cowrie)">0</span></p>
-            </div>
-            <div class="terminal" id="guest-terminal"></div>
-            <button class="action-btn" style="margin-top:10px;background:#30363d;color:#8b949e;" onclick="location.reload()">🔄 Switch Role</button>
-        </div>
+<div class="container">
+    <h1>🌍 OpenRAG Grid</h1>
+    <div class="subtitle">Africa's Distributed AI Infrastructure</div>
+    
+    <div id="role-selector">
+        <button class="role-btn dev-btn" onclick="showDevLogin()">👨‍💻 Institution / Developer</button>
+        <button class="role-btn worker-btn" onclick="initApp('worker')">📱 Compute Node</button>
+        <button class="role-btn guest-btn" onclick="initApp('guest')">👁️ Observer</button>
     </div>
 
-    <script>
-        // ==========================================
-        // إعدادات عامة
-        // ==========================================
-        let socket, peer, iceServers = [];
-        let currentRole = "";
-        let currentDevBudget = 5000;
+    <!-- Developer Login -->
+    <div id="dev-login" class="dashboard">
+        <div class="status">Role: <span style="color:var(--dev)">Institution</span></div>
+        <input type="text" id="dev-key" class="key-input" value="Africa_Grid_Secret_Key_2026_xyz">
+        <button class="action-btn btn-dev" onclick="initApp('developer')">🔐 Connect</button>
+        <button class="action-btn" style="margin-top:10px;background:#30363d;" onclick="backToRole()">← Back</button>
+    </div>
 
-        // ==========================================
-        // دوال التنقل بين الشاشات
-        // ==========================================
-        function showDevLogin() {
-            document.getElementById('role-selector').style.display = 'none';
-            document.getElementById('dev-login').style.display = 'block';
-        }
+    <!-- Developer Dashboard -->
+    <div id="dev-dashboard" class="dashboard">
+        <div class="status">Role: <span style="color:var(--dev)">Institution</span> | Status: <span id="dev-status">Ready 🟢</span></div>
+        <div class="wallet-card">
+            <h3 style="margin:0 0 10px 0; color:#8b949e;">Compute Budget (Cowries) 🐚</h3>
+            <p class="balance budget" id="dev-balance">5000</p>
+            <div style="font-size:0.8rem;color:#8b949e;">Demo Mode</div>
+        </div>
+        <button id="dev-btn" class="action-btn btn-dev" onclick="deployWorkload()">🚀 Deploy AI Workload (15MB)</button>
+        <div class="terminal" id="dev-log"></div>
+        <button class="action-btn" style="margin-top:10px;background:#30363d;" onclick="location.reload()">🔄 Switch</button>
+    </div>
 
-        function backToRole() {
+    <!-- Worker Dashboard -->
+    <div id="worker-dashboard" class="dashboard">
+        <div class="status">Role: <span style="color:var(--primary)">Compute Node</span> | Status: <span id="worker-status">Ready 🟢</span></div>
+        <div class="wallet-card">
+            <h3 style="margin:0 0 10px 0; color:#8b949e;">Cowries Earned 🐚</h3>
+            <p class="balance cowries" id="worker-balance">0</p>
+            <div style="font-size:0.8rem;color:#8b949e;">Resource Credits</div>
+        </div>
+        <button class="action-btn btn-worker" disabled>⏳ Listening...</button>
+        <div class="terminal" id="worker-log"></div>
+        <button class="action-btn" style="margin-top:10px;background:#30363d;" onclick="location.reload()">🔄 Switch</button>
+    </div>
+
+    <!-- Guest Dashboard -->
+    <div id="guest-dashboard" class="dashboard">
+        <div class="status">Role: <span style="color:#8b949e">Observer</span></div>
+        <div class="stats">
+            <div class="stat-box">
+                <div class="stat-value" id="stat-nodes">0</div>
+                <div class="stat-label">Active Nodes</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="stat-cowries">0</div>
+                <div class="stat-label">Cowries</div>
+            </div>
+        </div>
+        <div class="terminal" id="guest-log"></div>
+        <button class="action-btn" style="margin-top:10px;background:#30363d;" onclick="location.reload()">🔄 Switch</button>
+    </div>
+</div>
+
+<script>
+    let socket, currentRole = "", devBudget = 5000;
+
+    function log(id, msg, cls = '') {
+        const el = document.getElementById(id);
+        el.innerHTML += `<div class="${cls}">> ${msg}</div>`;
+        el.scrollTop = el.scrollHeight;
+    }
+
+    function showDevLogin() {
+        document.getElementById('role-selector').style.display = 'none';
+        document.getElementById('dev-login').style.display = 'block';
+    }
+
+    function backToRole() {
+        document.getElementById('dev-login').style.display = 'none';
+        document.getElementById('role-selector').style.display = 'flex';
+    }
+
+    function initApp(role) {
+        currentRole = role;
+        document.getElementById('role-selector').style.display = 'none';
+
+        if (role === 'developer') {
             document.getElementById('dev-login').style.display = 'none';
-            document.getElementById('role-selector').style.display = 'flex';
+            document.getElementById('dev-dashboard').style.display = 'block';
+        } else if (role === 'worker') {
+            document.getElementById('worker-dashboard').style.display = 'block';
+        } else {
+            document.getElementById('guest-dashboard').style.display = 'block';
         }
 
-        // ==========================================
-        // دوال طباعة الأحداث في الشاشة السوداء
-        // ==========================================
-        function logDev(msg, type = '') {
-            const term = document.getElementById('dev-terminal');
-            term.innerHTML += `<div>> <span class="${type}">${msg}</span></div>`;
-            term.scrollTop = term.scrollHeight;
-        }
-        function logWorker(msg, type = '') {
-            const term = document.getElementById('worker-terminal');
-            term.innerHTML += `<div>> <span class="${type}">${msg}</span></div>`;
-            term.scrollTop = term.scrollHeight;
-        }
-        function logGuest(msg, type = '') {
-            const term = document.getElementById('guest-terminal');
-            term.innerHTML += `<div>> <span class="${type}">${msg}</span></div>`;
-            term.scrollTop = term.scrollHeight;
+        const url = window.location.origin;
+        
+        if (role === 'developer') {
+            const key = document.getElementById('dev-key').value.trim();
+            socket = io(url, { auth: { token: key } });
+        } else {
+            socket = io(url);
         }
 
-        // ==========================================
-        // تهيئة التطبيق عند اختيار الدور
-        // ==========================================
-        function initApp(role) {
-            currentRole = role;
-            document.getElementById('role-selector').style.display = 'none';
+        // Common events
+        socket.on('connect', () => {
+            log('dev-log', `Connected: ${socket.id}`, 'log-success');
+            log('worker-log', `Connected: ${socket.id}`, 'log-success');
+            log('guest-log', `Connected as Observer`, 'log-success');
+        });
 
-            if (role === 'developer') {
-                document.getElementById('dev-login').style.display = 'none';
-                document.getElementById('dev-dashboard').style.display = 'block';
-            } else if (role === 'worker') {
-                document.getElementById('worker-dashboard').style.display = 'block';
-            } else if (role === 'guest') {
-                document.getElementById('guest-dashboard').style.display = 'block';
-            }
+        socket.on('ERROR', (err) => {
+            log('dev-log', `❌ ${err.msg}`, 'log-error');
+        });
 
-            const serverUrl = window.location.origin;
-            
-            if (role === 'developer') {
-                const apiKey = document.getElementById('dev-key-input').value.trim();
-                logDev('Connecting to Federation Core...');
-                socket = io(serverUrl, { auth: { token: apiKey } }); 
-            } else {
-                logWorker('Connecting to Edge Network...');
-                socket = io(serverUrl); 
-            }
+        socket.on('STATS_UPDATE', (stats) => {
+            document.getElementById('stat-nodes').innerText = stats.activeNodes;
+            document.getElementById('stat-cowries').innerText = stats.totalCowries;
+            log('guest-log', `Nodes: ${stats.activeNodes}, Cowries: ${stats.totalCowries}`);
+        });
 
-            // ==========================================
-            // أحداث عامة (لكل الأدوار)
-            // ==========================================
+        // Worker events
+        if (role === 'worker') {
             socket.on('connect', () => {
-                logDev('Socket connected.', 'log-success');
-                logDev(`Socket ID: ${socket.id}`);
+                const wallet = `Node_${Math.floor(Math.random() * 9999)}`;
+                socket.emit('REGISTER_WORKER', { wallet });
+                log('worker-log', `Registered: ${wallet}`);
             });
 
-            socket.on('disconnect', () => {
-                logDev('Socket disconnected.', 'log-error');
-            });
-
-            socket.on('ERROR', (err) => {
-                if (currentRole === 'developer') {
-                    logDev(`❌ Error: ${err.msg}`, 'log-error');
-                    document.getElementById('dev-btn').disabled = false;
-                    document.getElementById('dev-btn').innerText = "🚀 Deploy AI Workload (15MB)";
+            socket.on('BALANCE_UPDATE', (data) => {
+                document.getElementById('worker-balance').innerText = data.balance;
+                if (data.earned) {
+                    log('worker-log', `🎉 +${data.earned} Cowries!`, 'log-warn');
                 }
             });
 
-            // استقبال إعدادات الأنفاق السيادية (TURN)
-            socket.on('CONFIG', (data) => {
-                iceServers = data.iceServers;
-                if (currentRole === 'developer') {
-                    document.getElementById('dev-status').innerText = 'Ready 🟢';
-                    document.getElementById('dev-btn').disabled = false;
-                    logDev('Secure Zero-Trust Tunnel Ready.', 'log-success');
-                } else if (currentRole === 'worker') {
-                    document.getElementById('worker-status').innerText = 'Ready 🟢';
-                    logWorker('Secure TURN credentials loaded.', 'log-success');
-                }
-            });
-
-            // ==========================================
-            // أحداث العُقدة / الهاتف (Worker Logic)
-            // ==========================================
-            if (role === 'worker') {
-                socket.on('connect', () => {
-                    const walletId = `Node_${Math.floor(Math.random() * 9999)}`;
-                    socket.emit('REGISTER_WORKER', { wallet: walletId });
-                    logWorker(`Registered as: ${walletId}`);
-                });
-
-                // استقبال الرصيد الافتتاحي وتحديثات الأرباح
-                socket.on('BALANCE_UPDATE', (data) => {
-                    document.getElementById('worker-balance').innerText = data.balance;
-                    if (data.earned) {
-                        logWorker(`🎉 Proof of Work Verified! +${data.earned} Cowries 🐚`, 'log-warn');
-                        const walletCard = document.getElementById('worker-wallet');
-                        walletCard.classList.remove('flash');
-                        void walletCard.offsetWidth;
-                        walletCard.classList.add('flash');
-                    }
-                });
-
-                // استقبال إشارة P2P لفتح النفق والمعالجة
-                socket.on('SIGNAL', (data) => {
-                    if (!peer) {
-                        logWorker('⚡ Incoming Workload Request! Opening Tunnel...', 'log-warn');
-                        peer = new SimplePeer({ 
-                            initiator: false, 
-                            trickle: true, 
-                            config: { iceServers, iceTransportPolicy: 'relay' } 
-                        });
-                        
-                        peer.on('signal', sig => socket.emit('SIGNAL', { target: data.sender, signal: sig }));
-                        
-                        peer.on('connect', () => logWorker('🔒 P2P Tunnel Established.', 'log-success'));
-                        
-                        peer.on('data', msg => {
-                            logWorker(`📥 Received Payload: ${msg}`);
-                            logWorker('⚙️ Processing AI Data...');
-                            document.getElementById('worker-btn').innerText = "⚙️ Computing...";
-                            
-                            setTimeout(() => {
-                                logWorker('✅ Task complete. Sending result.');
-                                peer.send("200_OK_RAG_PROCESSED");
-                                
-                                socket.emit('TASK_COMPLETED', { sizeBytes: 15 * 1024 * 1024 }); 
-                                
-                                peer.destroy();
-                                peer = null;
-                                document.getElementById('worker-btn').innerText = "⏳ Listening for Grid Tasks...";
-                            }, 2000);
-                        });
-                    }
-                    peer.signal(data.signal);
-                });
-            }
-
-            // ==========================================
-            // أحداث المطور / الجامعة (Developer Logic)
-            // ==========================================
-            if (role === 'developer') {
-                socket.on('NODE_FOUND', ({ targetId }) => {
-                    logDev(`Grid matched you with node: ${targetId.substr(0,5)}...`);
-                    logDev('Establishing P2P connection...', 'log-dev');
-                    
-                    peer = new SimplePeer({ 
-                        initiator: true, 
-                        trickle: true, 
-                        config: { iceServers, iceTransportPolicy: 'relay' } 
-                    });
-                    
-                    peer.on('signal', sig => socket.emit('SIGNAL', { target: targetId, signal: sig }));
-                    
-                    peer.on('connect', () => {
-                        logDev('🔒 P2P Tunnel Established!', 'log-success');
-                        logDev('Uploading 15MB AI Model...');
-                        peer.send("[ENCRYPTED_RAG_PAYLOAD]");
-                    });
-                    
-                    peer.on('data', msg => {
-                        logDev(`✅ Worker Node Replied: ${msg}`, 'log-success');
-                        peer.destroy();
-                        peer = null;
-                        
-                        document.getElementById('dev-btn').disabled = false;
-                        document.getElementById('dev-btn').innerText = "🚀 Deploy AI Workload (15MB)";
-                    });
-                });
+            socket.on('EXECUTE_TASK', (data) => {
+                log('worker-log', `⚡ Task from ${data.sender.substr(0,5)}...`, 'log-warn');
+                log('worker-log', '⚙️ Processing...');
                 
-                socket.on('SIGNAL', data => { 
-                    if (peer) peer.signal(data.signal); 
-                });
-            }
-
-            // ==========================================
-            // أحداث الضيف (Guest Logic)
-            // ==========================================
-            if (role === 'guest') {
-                logGuest('Connecting as Observer...');
-                logGuest('Viewing grid status in real-time.', 'log-success');
-            }
+                setTimeout(() => {
+                    log('worker-log', '✅ Done! Sending result.', 'log-success');
+                }, 2000);
+            });
         }
 
-        // ==========================================
-        // دالة زر إطلاق المهمة (خاصة بالمطور)
-        // ==========================================
-        function deployWorkload() {
-            if (currentDevBudget < 15) {
-                logDev('❌ Insufficient Cowries balance!', 'log-error');
-                return;
-            }
+        // Developer events
+        if (role === 'developer') {
+            socket.on('TASK_SENT', (data) => {
+                log('dev-log', `📡 Task sent to ${data.wallet}`, 'log-success');
+                document.getElementById('dev-btn').disabled = false;
+                document.getElementById('dev-btn').innerText = '🚀 Deploy AI Workload (15MB)';
+            });
 
-            document.getElementById('dev-btn').disabled = true;
-            document.getElementById('dev-btn').innerText = "Searching Grid...";
-            logDev('Emitting FIND_NODE broadcast...');
-            
-            currentDevBudget -= 15;
-            document.getElementById('dev-balance').innerText = currentDevBudget;
-            logDev(`➖ 15 Cowries allocated for compute.`, 'log-dev');
-            
-            socket.emit('FIND_NODE');
+            socket.on('TASK_RESULT', (data) => {
+                log('dev-log', `✅ Result: ${data.result}`, 'log-success');
+                log('dev-log', `👷 Worker: ${data.worker}`, 'log-warn');
+            });
         }
-    </script>
+    }
+
+    function deployWorkload() {
+        if (devBudget < 15) {
+            log('dev-log', '❌ Insufficient balance!', 'log-error');
+            return;
+        }
+
+        document.getElementById('dev-btn').disabled = true;
+        document.getElementById('dev-btn').innerText = 'Processing...';
+        log('dev-log', '🔍 Finding node...');
+
+        devBudget -= 15;
+        document.getElementById('dev-balance').innerText = devBudget;
+
+        socket.emit('FIND_NODE');
+    }
+</script>
+
 </body>
 </html>
