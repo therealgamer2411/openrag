@@ -7,7 +7,7 @@
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
         :root { --bg: #0d1117; --primary: #00ff9d; --dev: #58a6ff; --text: #c9d1d9; --panel: #161b22; --cowrie: #f2cc60; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .container { width: 100%; max-width: 500px; background: var(--panel); border: 1px solid #30363d; border-radius: 12px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
         h1 { text-align: center; color: white; margin-top: 0; }
         .subtitle { text-align: center; color: #8b949e; font-size: 0.9rem; margin-bottom: 20px; }
@@ -49,7 +49,6 @@
         <button class="role-btn guest-btn" onclick="initApp('guest')">👁️ Observer</button>
     </div>
 
-    <!-- Developer Login -->
     <div id="dev-login" class="dashboard">
         <div class="status">Role: <span style="color:var(--dev)">Institution</span></div>
         <input type="text" id="dev-key" class="key-input" value="Africa_Grid_Secret_Key_2026_xyz">
@@ -57,7 +56,6 @@
         <button class="action-btn" style="margin-top:10px;background:#30363d;" onclick="backToRole()">← Back</button>
     </div>
 
-    <!-- Developer Dashboard -->
     <div id="dev-dashboard" class="dashboard">
         <div class="status">Role: <span style="color:var(--dev)">Institution</span> | Status: <span id="dev-status">Ready 🟢</span></div>
         <div class="wallet-card">
@@ -70,7 +68,6 @@
         <button class="action-btn" style="margin-top:10px;background:#30363d;" onclick="location.reload()">🔄 Switch</button>
     </div>
 
-    <!-- Worker Dashboard -->
     <div id="worker-dashboard" class="dashboard">
         <div class="status">Role: <span style="color:var(--primary)">Compute Node</span> | Status: <span id="worker-status">Ready 🟢</span></div>
         <div class="wallet-card">
@@ -83,9 +80,8 @@
         <button class="action-btn" style="margin-top:10px;background:#30363d;" onclick="location.reload()">🔄 Switch</button>
     </div>
 
-    <!-- Guest Dashboard -->
     <div id="guest-dashboard" class="dashboard">
-        <div class="status">Role: <span style="color:#8b949e">Observer</span></div>
+        <div class="status">Role: <span style="color:#8b949e">Observer</span> | Status: <span id="guest-status">Viewing Grid Status...</span></div>
         <div class="stats">
             <div class="stat-box">
                 <div class="stat-value" id="stat-nodes">0</div>
@@ -93,7 +89,7 @@
             </div>
             <div class="stat-box">
                 <div class="stat-value" id="stat-cowries">0</div>
-                <div class="stat-label">Cowries</div>
+                <div class="stat-label">Total Cowries</div>
             </div>
         </div>
         <div class="terminal" id="guest-log"></div>
@@ -106,6 +102,7 @@
 
     function log(id, msg, cls = '') {
         const el = document.getElementById(id);
+        if (!el) return;
         el.innerHTML += `<div class="${cls}">> ${msg}</div>`;
         el.scrollTop = el.scrollHeight;
     }
@@ -142,24 +139,38 @@
             socket = io(url);
         }
 
-        // Common events
+        socket.on('STATS_UPDATE', (stats) => {
+            const nodesEl = document.getElementById('stat-nodes');
+            const cowriesEl = document.getElementById('stat-cowries');
+            if (nodesEl) nodesEl.innerText = stats.activeNodes || 0;
+            if (cowriesEl) cowriesEl.innerText = stats.totalCowries || 0;
+            if (role === 'guest') {
+                log('guest-log', `📊 Nodes: ${stats.activeNodes || 0}, Cowries: ${stats.totalCowries || 0}`);
+            }
+        });
+
         socket.on('connect', () => {
             log('dev-log', `Connected: ${socket.id}`, 'log-success');
             log('worker-log', `Connected: ${socket.id}`, 'log-success');
             log('guest-log', `Connected as Observer`, 'log-success');
+            if (role === 'guest') {
+                document.getElementById('guest-status').innerText = 'Connected 🟢';
+            }
+        });
+
+        socket.on('disconnect', () => {
+            if (role === 'guest') {
+                document.getElementById('guest-status').innerText = 'Disconnected 🔴';
+                log('guest-log', 'Connection lost', 'log-error');
+            }
         });
 
         socket.on('ERROR', (err) => {
             log('dev-log', `❌ ${err.msg}`, 'log-error');
+            log('worker-log', `❌ ${err.msg}`, 'log-error');
+            log('guest-log', `❌ ${err.msg}`, 'log-error');
         });
 
-        socket.on('STATS_UPDATE', (stats) => {
-            document.getElementById('stat-nodes').innerText = stats.activeNodes;
-            document.getElementById('stat-cowries').innerText = stats.totalCowries;
-            log('guest-log', `Nodes: ${stats.activeNodes}, Cowries: ${stats.totalCowries}`);
-        });
-
-        // Worker events
         if (role === 'worker') {
             socket.on('connect', () => {
                 const wallet = `Node_${Math.floor(Math.random() * 9999)}`;
@@ -175,16 +186,16 @@
             });
 
             socket.on('EXECUTE_TASK', (data) => {
-                log('worker-log', `⚡ Task from ${data.sender.substr(0,5)}...`, 'log-warn');
+                log('worker-log', `⚡ Task from ${data.sender?.substr(0,5) || '???'}...`, 'log-warn');
                 log('worker-log', '⚙️ Processing...');
                 
                 setTimeout(() => {
-                    log('worker-log', '✅ Done! Sending result.', 'log-success');
+                    socket.emit('TASK_COMPLETED', { sizeBytes: 15 * 1024 * 1024 });
+                    log('worker-log', '✅ Done! Sent result.', 'log-success');
                 }, 2000);
             });
         }
 
-        // Developer events
         if (role === 'developer') {
             socket.on('TASK_SENT', (data) => {
                 log('dev-log', `📡 Task sent to ${data.wallet}`, 'log-success');
