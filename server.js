@@ -5,9 +5,6 @@ const { Server } = require("socket.io");
 const cors = require('cors');
 const path = require('path');
 
-// ==========================================
-// 1. إعدادات السيرفر الأساسية
-// ==========================================
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -20,15 +17,13 @@ const io = new Server(server, {
     pingInterval: 25000
 });
 
-// ==========================================
-// 2. قاعدة البيانات المحلية (In-Memory Mock DB للتجربة المجانية)
-// ==========================================
 const MAX_MEMORY_RECORDS = 5000;
 
 const mockDB = {
     api_clients: {},
     users: {}, 
-    transactions: []
+    transactions: [],
+    stats: { totalCowries: 0, activeNodes: 0 }  
 };
 
 const DEFAULT_DEV_KEY = process.env.DEV_API_KEY || "dev_key_local_only";
@@ -46,9 +41,6 @@ if (process.env.DEV_API_KEY) {
     };
 }
 
-// ==========================================
-// 3. إعدادات الشبكة و METERED (P2P Tunneling)
-// ==========================================
 const METERED_API_KEY = process.env.METERED_API_KEY;
 
 if (!METERED_API_KEY) {
@@ -86,9 +78,6 @@ async function getIceServers() {
     }
 }
 
-// ==========================================
-// 4. المحرك الاقتصادي — عملة الكاوري (Cowries)
-// ==========================================
 const PRICE_PER_MB_USD = 0.004; 
 const WORKER_SHARE = 0.25;
 const COWRIES_PER_DOLLAR = 1000;
@@ -96,9 +85,6 @@ const COWRIES_PER_DOLLAR = 1000;
 let workers = {}; 
 let developers = {}; 
 
-// ==========================================
-// 5. أنظمة الحماية
-// ==========================================
 const taskTracker = new Map();
 
 setInterval(() => {
@@ -115,17 +101,11 @@ function trimRecords() {
     }
 }
 
-// ==========================================
-// 6. إدارة اتصالات الشبكة (Socket Logic)
-// ==========================================
 io.on('connection', async (socket) => {
     console.log(`⚡ [Network] New connection detected: ${socket.id}`);
 
-    // 🔥 تسجيل Listeners فوراً قبل أي await
-    
-    // ------------------------------------------
-    // تسجيل العقدة / العامل (Worker Registration)
-    // ------------------------------------------
+    socket.emit('STATS_UPDATE', mockDB.stats);
+
     socket.on('REGISTER_WORKER', (data) => {
         let wallet = data?.wallet;
         
@@ -144,6 +124,8 @@ io.on('connection', async (socket) => {
         }
 
         workers[socket.id] = wallet;
+        mockDB.stats.activeNodes = Object.keys(workers).length;  
+        
         console.log(`📱 [Grid] Worker Node Ready: ${socket.id} | Wallet: ${wallet}`);
         
         if (!wallet.startsWith("Guest")) {
@@ -152,11 +134,10 @@ io.on('connection', async (socket) => {
             }
             socket.emit('BALANCE_UPDATE', { balance: mockDB.users[wallet].cowries_balance });
         }
+
+        io.emit('STATS_UPDATE', mockDB.stats);
     });
 
-    // ------------------------------------------
-    // توجيه الأحمال (FIND NODE)
-    // ------------------------------------------
     socket.on('FIND_NODE', () => {
         if (!developers[socket.id]) {
             return socket.emit('ERROR', { msg: "Authentication required" });
@@ -173,15 +154,11 @@ io.on('connection', async (socket) => {
         }
     });
 
-    // تمرير إشارات WebRTC بين العقد
     socket.on('SIGNAL', (data) => {
         if (!data || !data.target || !data.signal) return;
         io.to(data.target).emit('SIGNAL', { sender: socket.id, signal: data.signal });
     });
 
-    // ------------------------------------------
-    // المحاسبة وإصدار الكاوري (Task Completed)
-    // ------------------------------------------
     socket.on('TASK_COMPLETED', (data) => {
         const { sizeBytes } = data;
         const workerWallet = workers[socket.id]; 
@@ -193,7 +170,6 @@ io.on('connection', async (socket) => {
 
         if (!workerWallet || workerWallet.startsWith("Guest")) return;
 
-        // Rate Limiting
         const now = Date.now();
         const lastTask = taskTracker.get(socket.id);
         if (lastTask && (now - lastTask) < 3000) {
@@ -211,6 +187,7 @@ io.on('connection', async (socket) => {
 
         if (mockDB.users[workerWallet]) {
             mockDB.users[workerWallet].cowries_balance += cowriesEarned;
+            mockDB.stats.totalCowries += cowriesEarned;  
             
             socket.emit('BALANCE_UPDATE', { 
                 balance: mockDB.users[workerWallet].cowries_balance, 
@@ -226,16 +203,20 @@ io.on('connection', async (socket) => {
 
             trimRecords();
 
+            io.emit('STATS_UPDATE', mockDB.stats);
+
             console.log(`🪙 [Economy] +${cowriesEarned} Cowries to ${workerWallet}. Total: ${mockDB.users[workerWallet].cowries_balance}`);
         }
     });
 
-    // تنظيف عند قطع الاتصال
     socket.on('disconnect', () => {
         console.log(`🔌 [Grid] Node Disconnected: ${socket.id}`);
         delete workers[socket.id];
         delete developers[socket.id];
         taskTracker.delete(socket.id);
+
+        mockDB.stats.activeNodes = Object.keys(workers).length;
+        io.emit('STATS_UPDATE', mockDB.stats);
     });
 
     // ------------------------------------------
@@ -260,9 +241,6 @@ io.on('connection', async (socket) => {
     socket.emit('CONFIG', { iceServers });
 });
 
-// ==========================================
-// 7. Graceful Shutdown
-// ==========================================
 process.on('SIGTERM', () => {
     console.log('\n[!] SIGTERM received. Shutting down gracefully...');
     io.close(() => {
@@ -283,9 +261,6 @@ process.on('SIGINT', () => {
     });
 });
 
-// ==========================================
-// 8. التشغيل
-// ==========================================
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`\n========================================`);
