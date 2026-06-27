@@ -25,18 +25,21 @@ const mockDB = {
     transactions: []
 };
 
+// ==========================================
+// الهوية الأفريقية الخالصة: ميزانية الكاوري بدلاً من الدولار
+// ==========================================
 const DEFAULT_DEV_KEY = process.env.DEV_API_KEY || "dev_key_local_only";
 if (process.env.DEV_API_KEY) {
     mockDB.api_clients[process.env.DEV_API_KEY] = { 
         id: "dev_1", 
         email: "admin@openrag.africa", 
-        balance_usd: 100.00 
+        compute_budget_cowries: 5000 
     };
 } else {
     mockDB.api_clients[DEFAULT_DEV_KEY] = { 
         id: "dev_1", 
         email: "admin@openrag.africa", 
-        balance_usd: 100.00 
+        compute_budget_cowries: 5000 
     };
 }
 
@@ -213,9 +216,10 @@ io.on('connection', async (socket) => {
     if (apiKey) {
         const client = mockDB.api_clients[apiKey];
         
-        if (!client || client.balance_usd <= 0) {
-            console.log(`⛔ Auth Failed or Zero Balance for: ${apiKey.substring(0, 8)}...`);
-            socket.emit('ERROR', { msg: "Authentication Failed or Insufficient Balance" });
+        // التحقق من أن المطور لديه رصيد كاوري (تم إلغاء الدولار تماماً)
+        if (!client || client.compute_budget_cowries <= 0) {
+            console.log(`⛔ Auth Failed or Zero Compute Budget for: ${apiKey.substring(0, 8)}...`);
+            socket.emit('ERROR', { msg: "Authentication Failed or Insufficient Compute Budget" });
             return socket.disconnect(); 
         }
         
@@ -254,6 +258,6 @@ server.listen(PORT, () => {
     console.log(`🔒 Security: Rate Limiting + Input Validation Enabled`);
     console.log(`💾 Storage: In-Memory (Free Demo Mode)`);
     console.log(`🐚 Economy: Cowries — Africa's Resource Credit System`);
-    console.log(`📝 Note: No cash redemption. Credits circulate within the network.`);
+    console.log(`📝 Note: No fiat integration. 100% sovereign ecosystem.`);
     console.log(`========================================\n`);
 });
