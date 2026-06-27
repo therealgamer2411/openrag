@@ -5,9 +5,6 @@ const { Server } = require("socket.io");
 const cors = require('cors');
 const path = require('path');
 
-// ==========================================
-// 1. إعدادات السيرفر الأساسية
-// ==========================================
 const app = express();
 app.use(cors());
 app.use(express.json());
@@ -20,9 +17,6 @@ const io = new Server(server, {
     pingInterval: 25000
 });
 
-// ==========================================
-// 2. قاعدة البيانات المحلية (In-Memory Mock DB للتجربة المجانية)
-// ==========================================
 const MAX_MEMORY_RECORDS = 5000;
 
 const mockDB = {
@@ -46,9 +40,6 @@ if (process.env.DEV_API_KEY) {
     };
 }
 
-// ==========================================
-// 3. إعدادات الشبكة و METERED (P2P Tunneling)
-// ==========================================
 const METERED_API_KEY = process.env.METERED_API_KEY;
 
 if (!METERED_API_KEY) {
@@ -86,9 +77,6 @@ async function getIceServers() {
     }
 }
 
-// ==========================================
-// 4. المحرك الاقتصادي — عملة الكاوري (Cowries)
-// ==========================================
 const PRICE_PER_MB_USD = 0.004; 
 const WORKER_SHARE = 0.25;
 const COWRIES_PER_DOLLAR = 1000;
@@ -96,9 +84,6 @@ const COWRIES_PER_DOLLAR = 1000;
 let workers = {}; 
 let developers = {}; 
 
-// ==========================================
-// 5. أنظمة الحماية
-// ==========================================
 const taskTracker = new Map();
 
 setInterval(() => {
@@ -115,17 +100,9 @@ function trimRecords() {
     }
 }
 
-// ==========================================
-// 6. إدارة اتصالات الشبكة (Socket Logic)
-// ==========================================
 io.on('connection', async (socket) => {
     console.log(`⚡ [Network] New connection detected: ${socket.id}`);
 
-    // 🔥 تسجيل Listeners فوراً قبل أي await
-    
-    // ------------------------------------------
-    // تسجيل العقدة / العامل (Worker Registration)
-    // ------------------------------------------
     socket.on('REGISTER_WORKER', (data) => {
         let wallet = data?.wallet;
         
@@ -154,9 +131,6 @@ io.on('connection', async (socket) => {
         }
     });
 
-    // ------------------------------------------
-    // توجيه الأحمال (FIND NODE)
-    // ------------------------------------------
     socket.on('FIND_NODE', () => {
         if (!developers[socket.id]) {
             return socket.emit('ERROR', { msg: "Authentication required" });
@@ -173,15 +147,11 @@ io.on('connection', async (socket) => {
         }
     });
 
-    // تمرير إشارات WebRTC بين العقد
     socket.on('SIGNAL', (data) => {
         if (!data || !data.target || !data.signal) return;
         io.to(data.target).emit('SIGNAL', { sender: socket.id, signal: data.signal });
     });
 
-    // ------------------------------------------
-    // المحاسبة وإصدار الكاوري (Task Completed)
-    // ------------------------------------------
     socket.on('TASK_COMPLETED', (data) => {
         const { sizeBytes } = data;
         const workerWallet = workers[socket.id]; 
@@ -230,7 +200,6 @@ io.on('connection', async (socket) => {
         }
     });
 
-    // تنظيف عند قطع الاتصال
     socket.on('disconnect', () => {
         console.log(`🔌 [Grid] Node Disconnected: ${socket.id}`);
         delete workers[socket.id];
@@ -238,9 +207,6 @@ io.on('connection', async (socket) => {
         taskTracker.delete(socket.id);
     });
 
-    // ------------------------------------------
-    // ⏳ بعد تأمين الـ Listeners، نجلب البيانات ونتحقق من الهوية
-    // ------------------------------------------
     const iceServers = await getIceServers();
     const apiKey = socket.handshake.auth.token;
     
@@ -260,9 +226,6 @@ io.on('connection', async (socket) => {
     socket.emit('CONFIG', { iceServers });
 });
 
-// ==========================================
-// 7. Graceful Shutdown
-// ==========================================
 process.on('SIGTERM', () => {
     console.log('\n[!] SIGTERM received. Shutting down gracefully...');
     io.close(() => {
@@ -283,9 +246,6 @@ process.on('SIGINT', () => {
     });
 });
 
-// ==========================================
-// 8. التشغيل
-// ==========================================
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`\n========================================`);
