@@ -217,7 +217,7 @@ async function refreshLogs(){
 function setPill(id,text,kind){const el=$(id);el.textContent=text;el.className='pill '+(kind||'');}
 async function checkCapabilities(){
   setPill('syncSupport',('serviceWorker'in navigator && 'SyncManager'in window)?'مدعوم جزئيًا':'غير متاح','');
-  setPill('periodicSupport',('serviceWorker'in navigator && 'periodicSync' in ServiceWorkerRegistration.prototype)?'API موجود':'غير متاح','');
+  setPill('periodicSupport',('serviceWorker' in navigator && typeof ServiceWorkerRegistration!=='undefined' && 'periodicSync' in ServiceWorkerRegistration.prototype)?'API موجود':'غير متاح','');
   setPill('sharedSupport','SharedWorker'in window?'مدعوم':'غير مدعوم','');
   setPill('wakeSupport','wakeLock'in navigator?'API موجود':'غير متاح','');
   try{const p=await navigator.storage.persisted();setPill('persistSupport',p?'التخزين دائم':'غير دائم / غير مضمون',p?'ok':'warn');}catch(e){setPill('persistSupport','غير معلوم','warn');}
