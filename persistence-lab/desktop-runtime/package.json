@@ -1,0 +1,9 @@
+{
+  "name": "openrag-desktop-node-runtime",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Windows service host for OpenRAG node work when the browser is closed",
+  "dependencies": {
+    "node-windows": "^1.0.0-beta.8"
+  }
+}
