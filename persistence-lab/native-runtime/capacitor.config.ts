@@ -1,3 +1,4 @@
+/// <reference types="@capacitor/background-runner" />
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
@@ -11,7 +12,7 @@ const config: CapacitorConfig = {
       event: 'openragNodeTick',
       repeat: true,
       interval: 15,
-      autoStart: false,
+      autoStart: true,
     },
   },
 };
