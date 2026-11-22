@@ -1,0 +1,26 @@
+name: OpenRAG Node Runtime
+on:
+  push:
+    branches: [main, feat/openrag-node-runtime]
+    paths:
+      - 'node-runtime/**'
+      - '.github/workflows/openrag-node-runtime.yml'
+  pull_request:
+    paths:
+      - 'node-runtime/**'
+      - '.github/workflows/openrag-node-runtime.yml'
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install runtime dependencies
+        working-directory: node-runtime
+        run: npm install --no-audit --no-fund
+      - name: Run runtime tests
+        working-directory: node-runtime
+        run: npm test
