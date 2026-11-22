@@ -11,8 +11,9 @@ This adapter runs the shared OpenRAG Node Runtime worker as a Windows Service, s
 ## Setup
 1. Configure node-runtime/.env using node-runtime/.env.example.
 2. Set OPENRAG_COORDINATOR_URL to the reachable coordinator URL.
-3. From this directory, run npm install.
-4. Open an elevated terminal and run node install.js.
+3. Run npm install inside the node-runtime directory to install its runtime dependencies.
+4. Run npm install inside persistence-lab/desktop-runtime to install the Windows service wrapper.
+5. Open an elevated terminal in persistence-lab/desktop-runtime and run node install.js.
 
 The service launches node-runtime/src/worker.js and restarts it if it exits. The service runs independently from the browser. The task worker currently executes only the allowlisted echo, sha256 and sum task types.
 
