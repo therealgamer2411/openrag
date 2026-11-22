@@ -1,15 +1,12 @@
-cat > .gitignore << 'EOF'
-# Dependencies
 node_modules/
-
-# Environment variables
 .env
-
-# Logs
+.env.*
+!.env.example
 *.log
 npm-debug.log*
-
-# OS files
 .DS_Store
 Thumbs.db
-EOF
+coverage/
+playwright-report/
+test-results/
+persistence-lab/data/
