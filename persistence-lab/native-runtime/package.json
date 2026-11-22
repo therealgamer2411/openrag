@@ -1,0 +1,10 @@
+{
+  "name": "openrag-persistence-native-runtime",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Native background execution adapter for OpenRAG Persistence Lab",
+  "dependencies": {
+    "@capacitor/core": "^7.4.3",
+    "@capacitor/background-runner": "^2.1.0"
+  }
+}
