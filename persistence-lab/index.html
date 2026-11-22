@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f3f5f8">
+<meta name="description" content="OpenRAG Persistence Research Lab — اختبار استمرار العقدة في الخلفية وبعد إغلاق المتصفح">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<title>OpenRAG | Persistence Lab v0.3.0</title>
+<style>
+:root{--ink:#17212f;--muted:#667386;--line:#e2e7ee;--paper:#fff;--wash:#f3f5f8;--orange:#f28c28;--green:#15835d;--red:#c34b4b;--blue:#2768a8;--amber:#a66a12;--shadow:0 12px 34px rgba(28,42,60,.07)}
+*{box-sizing:border-box}body{margin:0;background:var(--wash);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",Tahoma,Arial,sans-serif;line-height:1.55}button,input,select{font:inherit}button{border:0;border-radius:11px;padding:10px 14px;background:var(--ink);color:#fff;cursor:pointer;font-weight:700}button.secondary{background:#e9eef4;color:var(--ink)}button.orange{background:var(--orange);color:#241506}button.danger{background:#fce9e9;color:#963737}button:disabled{opacity:.45;cursor:not-allowed}input,select{border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fff;color:var(--ink);min-width:0;width:100%}small,.muted{color:var(--muted)}.wrap{max-width:1180px;margin:auto;padding:22px 18px 60px}.top{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:18px}.brand{display:flex;gap:12px;align-items:center}.logo{width:44px;height:44px;border-radius:14px;background:#fff;box-shadow:var(--shadow);display:grid;place-items:center;color:var(--orange);font-size:22px;font-weight:900}.eyebrow{font-size:11px;letter-spacing:.14em;color:var(--muted);font-weight:800}.version{border:1px solid var(--line);background:#fff;border-radius:999px;padding:6px 10px;font-size:12px;color:var(--muted)}h1{font-size:clamp(25px,4vw,40px);line-height:1.2;margin:6px 0 8px}.lead{color:var(--muted);max-width:800px;margin:0}.hero{background:linear-gradient(125deg,#fff 0%,#fff 62%,#fff5e9 100%);border:1px solid var(--line);border-radius:22px;padding:26px;box-shadow:var(--shadow);margin-bottom:18px}.hero-row{display:flex;align-items:flex-start;justify-content:space-between;gap:18px}.hero-mark{font-size:12px;font-weight:800;color:#9b5b13;background:#fff0dc;border-radius:999px;padding:7px 11px;white-space:nowrap}.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:14px}.card{grid-column:span 6;background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:var(--shadow);min-width:0}.card.full{grid-column:1/-1}.card.third{grid-column:span 4}.card h2{font-size:17px;margin:0 0 12px;display:flex;align-items:center;gap:9px}.num{font-size:11px;color:var(--orange);font-weight:900;letter-spacing:.12em}.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.stat{background:#f7f9fb;border:1px solid #edf0f4;border-radius:12px;padding:11px;min-width:0}.stat b{display:block;font-size:17px;overflow-wrap:anywhere}.stat span{font-size:11px;color:var(--muted)}.pill{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:800;background:#eef2f6;color:#556273}.pill.ok{background:#e5f5ee;color:#14724f}.pill.warn{background:#fff3df;color:#966017}.pill.bad{background:#fbe9e9;color:#a63838}.rows{display:grid;gap:9px}.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #f0f2f5}.row:last-child{border-bottom:0}.row strong{font-size:13px}.row .value{font-size:12px;color:var(--muted);text-align:left;direction:ltr}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.field{display:flex;gap:8px;align-items:center}.field>*{flex:1}.hint{font-size:12px;color:var(--muted);margin:9px 0 0}.warning{background:#fff7e9;border:1px solid #f4dfb8;border-radius:12px;padding:12px;color:#75521d;font-size:12px}.danger-note{background:#fff0f0;border:1px solid #f2d1d1;border-radius:12px;padding:12px;color:#873b3b;font-size:12px}.code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;direction:ltr;text-align:left;overflow-wrap:anywhere}.log{height:270px;overflow:auto;background:#101923;color:#d3dfeb;border-radius:13px;padding:12px;font:11px/1.65 ui-monospace,SFMono-Regular,Consolas,monospace;direction:ltr;text-align:left}.logline{border-bottom:1px solid rgba(255,255,255,.07);padding:3px 0;white-space:pre-wrap;overflow-wrap:anywhere}.logline .time{color:#8ea6bf}.logline .kind{color:#f1a54d}.progress{height:7px;background:#edf0f4;border-radius:999px;overflow:hidden;margin-top:7px}.progress>i{display:block;height:100%;width:0;background:var(--orange);transition:width .2s}.footer{margin-top:18px;color:var(--muted);font-size:11px;text-align:center}.split{display:grid;grid-template-columns:1fr 1fr;gap:10px}.testlist{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.testitem{border:1px solid var(--line);padding:10px;border-radius:12px}.testitem b{display:block;font-size:13px}.testitem span{font-size:11px;color:var(--muted)}@media(max-width:760px){.wrap{padding:14px 12px 40px}.card,.card.third{grid-column:1/-1}.hero{padding:20px}.hero-row{display:block}.hero-mark{display:inline-block;margin-top:13px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.top{align-items:flex-start}.testlist{grid-template-columns:1fr}.split{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="brand"><div class="logo">OR</div><div><div class="eyebrow">STACK CORE SYSTEMS · OPENRAG GRID</div><strong>Persistence Research Lab</strong><div class="muted" style="font-size:11px">Browser lifecycle · background execution · recovery</div></div></div>
+    <span class="version">EXPERIMENT v0.3.0</span>
+  </header>
+
+  <section class="hero">
+    <div class="hero-row">
+      <div>
+        <div class="eyebrow">OPENRAG / RUNTIME RESEARCH</div>
+        <h1>هل تبقى العقدة حية عندما تختفي الصفحة؟</h1>
+        <p class="lead">مختبر يراقب تنفيذ JavaScript وWorkers وService Worker واتصال P2P أثناء إخفاء الصفحة، قفل الشاشة، إغلاق التبويب، وإغلاق المتصفح. لا نعتبر الاتصال المفتوح دليلًا على استمرار الحوسبة.</p>
+      </div>
+      <div class="hero-mark">اختبار فعلي · لا محاكاة</div>
+    </div>
+  </section>
+
+  <div class="grid">
+    <section class="card">
+      <h2><span class="num">01</span> هوية العقدة وحالة الصفحة</h2>
+      <div class="stats">
+        <div class="stat"><b id="nodeId" class="code">—</b><span>معرّف جلسة المختبر</span></div>
+        <div class="stat"><b id="visibility">—</b><span>Visibility State</span></div>
+        <div class="stat"><b id="lifecycle">—</b><span>Lifecycle State</span></div>
+        <div class="stat"><b id="discarded">—</b><span>Page Was Discarded</span></div>
+        <div class="stat"><b id="platform">—</b><span>Browser / Platform</span></div>
+        <div class="stat"><b id="cores">—</b><span>Logical Cores</span></div>
+      </div>
+      <div class="rows" style="margin-top:10px">
+        <div class="row"><strong>آخر نبضة للصفحة</strong><span class="value" id="pagePulse">—</span></div>
+        <div class="row"><strong>آخر نبضة للـWorker</strong><span class="value" id="workerPulse">—</span></div>
+        <div class="row"><strong>Service Worker</strong><span class="value" id="swState">جارٍ الفحص</span></div>
+      </div>
+      <div class="actions">
+        <button id="registerSw" class="orange">تسجيل / تحديث Service Worker</button>
+        <button id="installBtn" class="secondary" disabled>تثبيت كتطبيق PWA</button>
+      </div>
+      <p class="hint">تثبيت PWA شرط محتمل لبعض وظائف Background Sync الدورية في Chrome، لكنه لا يحوّل المتصفح إلى عملية دائمة.</p>
+    </section>
+
+    <section class="card">
+      <h2><span class="num">02</span> تشغيل الحمل ومراقبة JavaScript</h2>
+      <div class="field">
+        <select id="duration"><option value="180">3 دقائق</option><option value="600" selected>10 دقائق</option><option value="900">15 دقيقة</option></select>
+        <button id="startRun" class="orange">بدء الاختبار</button>
+        <button id="stopRun" class="danger" disabled>إيقاف</button>
+      </div>
+      <div class="stats" style="margin-top:12px">
+        <div class="stat"><b id="pageTicks">0</b><span>Page ticks</span></div>
+        <div class="stat"><b id="workerTicks">0</b><span>Worker ticks</span></div>
+        <div class="stat"><b id="workerJobs">0</b><span>Worker jobs</span></div>
+      </div>
+      <div class="row"><strong>مدة الاختبار</strong><span class="value" id="elapsed">00:00</span></div>
+      <div class="progress"><i id="runProgress"></i></div>
+      <div class="actions"><button class="secondary" id="pagePulseNow">نبضة الصفحة الآن</button><button class="secondary" id="workerPulseNow">نبضة Worker الآن</button></div>
+      <p class="hint">الحمل الحسابي محدود عمدًا. الهدف قياس توقف التنفيذ واستعادته، وليس استنزاف البطارية أو الضغط على الجهاز.</p>
+    </section>
+
+    <section class="card">
+      <h2><span class="num">03</span> Service Worker وواجهات الخلفية</h2>
+      <div class="rows">
+        <div class="row"><strong>Background Sync</strong><span id="syncSupport" class="pill">يفحص</span></div>
+        <div class="row"><strong>Periodic Background Sync</strong><span id="periodicSupport" class="pill">يفحص</span></div>
+        <div class="row"><strong>SharedWorker</strong><span id="sharedSupport" class="pill">يفحص</span></div>
+        <div class="row"><strong>Wake Lock</strong><span id="wakeSupport" class="pill">يفحص</span></div>
+        <div class="row"><strong>تخزين دائم</strong><span id="persistSupport" class="pill">يفحص</span></div>
+      </div>
+      <div class="actions">
+        <button id="registerSync">طلب Background Sync</button>
+        <button id="registerPeriodic" class="secondary">طلب Periodic Sync</button>
+        <button id="swProbe" class="secondary">إرسال حدث إلى SW</button>
+      </div>
+      <div class="warning" style="margin-top:12px">Background Sync يعيد محاولة إرسال الطلبات المؤجلة عند إيقاظ Service Worker. وPeriodic Sync مجدول بقرار المتصفح وقد لا يعمل أصلًا على هذا الجهاز. لا توفر أي منهما حلقة CPU دائمة.</div>
+    </section>
+
+    <section class="card">
+      <h2><span class="num">04</span> شاهد خارجي عبر P2P</h2>
+      <div class="row"><strong>Peer ID لهذه العقدة</strong><span class="value code" id="peerId">جارٍ الإنشاء</span></div>
+      <div class="field">
+        <input id="remoteId" placeholder="ألصق Peer ID للجهاز الآخر" dir="ltr">
+        <button id="connectPeer">اتصال</button>
+      </div>
+      <div class="rows">
+        <div class="row"><strong>قناة P2P</strong><span id="peerState" class="pill">غير متصل</span></div>
+        <div class="row"><strong>آخر رد من الجهاز الآخر</strong><span id="lastPong" class="value">—</span></div>
+        <div class="row"><strong>الردود / المهلات</strong><span id="pongCounts" class="value">0 / 0</span></div>
+      </div>
+      <div class="actions">
+        <button id="monitorPeer" class="orange" disabled>بدء مراقبة الطرف الآخر</button>
+        <button id="stopMonitor" class="secondary" disabled>إيقاف المراقبة</button>
+        <button id="disconnectPeer" class="danger">قطع الاتصال</button>
+      </div>
+      <p class="hint">افتح المختبر على جهازين. اتصل من جهاز المراقبة إلى Peer ID للجهاز المختبَر. الجهاز المختبَر يرد على رسائل التحدي تلقائيًا ما دامت JavaScript تُنفذ.</p>
+    </section>
+
+    <section class="card">
+      <h2><span class="num">05</span> اختبار الاستمرارية حسب المرحلة</h2>
+      <div class="testlist">
+        <div class="testitem"><b>A · الصفحة مفتوحة</b><span>Baseline لمدة 3 دقائق</span></div>
+        <div class="testitem"><b>B · تبويب بالخلفية</b><span>انتقل لتطبيق آخر 10 دقائق</span></div>
+        <div class="testitem"><b>C · شاشة مقفلة</b><span>اقفل الهاتف 10–15 دقيقة</span></div>
+        <div class="testitem"><b>D · إغلاق التبويب</b><span>أغلق صفحة المختبر فقط</span></div>
+        <div class="testitem"><b>E · إغلاق المتصفح</b><span>أنهِ عملية المتصفح بالكامل</span></div>
+        <div class="testitem"><b>F · الاستعادة</b><span>أعد فتح المختبر واسترجع السجل</span></div>
+      </div>
+      <div class="actions">
+        <button id="markPhase" class="secondary">تسجيل بداية مرحلة</button>
+        <select id="phase"><option value="A">A · تشغيل طبيعي</option><option value="B">B · خلفية</option><option value="C">C · قفل الشاشة</option><option value="D">D · إغلاق التبويب</option><option value="E">E · إغلاق المتصفح</option><option value="F">F · الاستعادة</option></select>
+      </div>
+      <p class="hint">لا يمكن للصفحة تسجيل الحدث بعد قتل عملية المتصفح. لذلك يوجد سجل محلي محفوظ مسبقًا، وشاهد P2P خارجي، وسجل طلبات مستقل على Vercel.</p>
+    </section>
+
+    <section class="card">
+      <h2><span class="num">06</span> أدلة الاستعادة والسجل المخزن</h2>
+      <div class="stats">
+        <div class="stat"><b id="storedCount">0</b><span>سجلات IndexedDB</span></div>
+        <div class="stat"><b id="swEvents">0</b><span>أحداث Service Worker</span></div>
+        <div class="stat"><b id="queuedEvents">0</b><span>أحداث انتظار الإرسال</span></div>
+      </div>
+      <div class="actions">
+        <button id="refreshLogs" class="secondary">تحديث السجل</button>
+        <button id="exportLogs">تصدير JSON</button>
+        <button id="clearLogs" class="danger">مسح سجل هذا المتصفح</button>
+      </div>
+      <p class="hint">السجل المحلي يبقى بعد إغلاق التبويب والمتصفح طالما لم يُمسح تخزين الموقع. لكنه لا يثبت استمرار التنفيذ أثناء الإغلاق؛ يثبت فقط ما حدث قبل التوقف وما سجله Service Worker إن تم إيقاظه.</p>
+    </section>
+
+    <section class="card full">
+      <h2><span class="num">07</span> سجل حي للأحداث</h2>
+      <div class="log" id="log" aria-live="polite"></div>
+    </section>
+    <section class="card full">
+      <h2><span class="num">08</span> تعليمات التشغيل والتفسير</h2>
+      <div class="split">
+        <div class="warning"><b>على الكمبيوتر:</b> افتح المختبر في Chrome، شغّل الاختبار، واتصل من الهاتف كشاهد. اختبر تبويب الخلفية ثم استخدم <span class="code">chrome://discards</span> لتجميد أو إسقاط التبويب يدويًا. بعد ذلك أغلق المتصفح بالكامل.</div>
+        <div class="warning"><b>على الهاتف:</b> افتح المختبر في Chrome، ثبّته كتطبيق من قائمة المتصفح إن ظهر خيار التثبيت، شغّل الاختبار، ثم انتقل لتطبيق آخر واقفل الشاشة. لا تستخدم Force Stop أثناء اختبار الخلفية؛ استخدمه في مرحلة الإغلاق النهائي فقط.</div>
+      </div>
+      <div class="danger-note" style="margin-top:10px"><b>قاعدة علمية:</b> إذا انتهت عملية المتصفح بالكامل، فلا توجد JavaScript داخلها تستطيع الاستمرار. أي استمرار بعد ذلك يجب أن يأتي من منفذ تشغيل نظامي منفصل أو من عقدة أخرى على الشبكة. المختبر سيُظهر الدليل بدل أن يدّعي وجود حل.</div>
+    </section>
+  </div>
+  <div class="footer">MEDIA FIRST → STACK CORE SYSTEMS → OPENRAG GRID · RESEARCH BUILD · لا توجد محفظة أو مكافآت أو تشغيل خفي</div>
+</div>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script>
+(function(){
+'use strict';
+const $ = id => document.getElementById(id);
+const uuid = () => (crypto.randomUUID ? crypto.randomUUID() : 'or-'+Date.now()+'-'+Math.random().toString(16).slice(2));
+const nodeId = uuid();
+$('nodeId').textContent = nodeId;
+$('platform').textContent = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || 'Unknown';
+$('cores').textContent = navigator.hardwareConcurrency || 'غير معلن';
+$('discarded').textContent = document.wasDiscarded ? 'نعم' : 'لا';
+let lifecycleState = document.visibilityState === 'visible' ? 'active' : 'hidden';
+$('lifecycle').textContent = lifecycleState;
+$('visibility').textContent = document.visibilityState;
+let dbPromise;
+function db(){
+  if(dbPromise) return dbPromise;
+  dbPromise = new Promise((resolve,reject)=>{
+    const req = indexedDB.open('openrag-persistence-lab',1);
+    req.onupgradeneeded = () => { const d=req.result; if(!d.objectStoreNames.contains('events')) d.createObjectStore('events',{keyPath:'id',autoIncrement:true}); };
+    req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error);
+  });
+  return dbPromise;
+}
+async function saveLocal(rec){
+  try{ const d=await db(); await new Promise((resolve,reject)=>{const tx=d.transaction('events','readwrite');tx.objectStore('events').add(rec);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);}); }catch(e){ console.warn('IndexedDB write failed',e); }
+}
+function appendLog(rec){
+  const line=document.createElement('div'); line.className='logline';
+  const time=document.createElement('span'); time.className='time'; time.textContent='['+(rec.at||new Date().toISOString())+'] ';
+  const kind=document.createElement('span'); kind.className='kind'; kind.textContent=(rec.source||'page')+' · '+(rec.type||'event')+' ';
+  const detail=document.createElement('span'); detail.textContent=JSON.stringify(rec.detail||{});
+  line.append(time,kind,detail); $('log').appendChild(line); $('log').scrollTop=$('log').scrollHeight;
+  while($('log').children.length>240) $('log').removeChild($('log').firstChild);
+}
+async function record(type,detail={},source='page',witness=false){
+  const rec={id:uuid(),at:new Date().toISOString(),type,source,nodeId,detail};
+  appendLog(rec); await saveLocal(rec);
+  if(witness) sendWitness(rec);
+  return rec;
+}
+async function sendWitness(rec){
+  try{
+    const r=await fetch('./api/witness',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({eventId:rec.id,nodeId:nodeId,source:rec.source,type:rec.type,at:rec.at,detail:rec.detail})});
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data=await r.json(); appendLog({at:data.acceptedAt||new Date().toISOString(),source:'witness-api',type:'accepted',detail:{eventId:rec.id}});
+  }catch(e){appendLog({at:new Date().toISOString(),source:'witness-api',type:'not-reached',detail:{message:String(e)}});}
+}
+async function refreshLogs(){
+  try{
+    const d=await db();
+    const all=await new Promise((resolve,reject)=>{const tx=d.transaction('events','readonly');const rq=tx.objectStore('events').getAll();rq.onsuccess=()=>resolve(rq.result||[]);rq.onerror=()=>reject(rq.error);});
+    $('storedCount').textContent=all.length;
+    $('swEvents').textContent=all.filter(x=>x.source==='service-worker').length;
+    $('queuedEvents').textContent=all.filter(x=>x.type==='witness-queued').length;
+    return all;
+  }catch(e){return [];}
+}
+function setPill(id,text,kind){const el=$(id);el.textContent=text;el.className='pill '+(kind||'');}
+async function checkCapabilities(){
+  setPill('syncSupport',('serviceWorker'in navigator && 'SyncManager'in window)?'مدعوم جزئيًا':'غير متاح','');
+  setPill('periodicSupport',('serviceWorker'in navigator && 'periodicSync' in ServiceWorkerRegistration.prototype)?'API موجود':'غير متاح','');
+  setPill('sharedSupport','SharedWorker'in window?'مدعوم':'غير مدعوم','');
+  setPill('wakeSupport','wakeLock'in navigator?'API موجود':'غير متاح','');
+  try{const p=await navigator.storage.persisted();setPill('persistSupport',p?'التخزين دائم':'غير دائم / غير مضمون',p?'ok':'warn');}catch(e){setPill('persistSupport','غير معلوم','warn');}
+  try{const p=await navigator.storage.persist();setPill('persistSupport',p?'مُنح الإذن':'لم يُمنح الإذن',p?'ok':'warn');}catch(e){}
+}
+let swReg=null;
+async function registerSW(){
+  if(!('serviceWorker' in navigator)){ $('swState').textContent='غير مدعوم'; return; }
+  try{
+    swReg=await navigator.serviceWorker.register('./sw.js',{scope:'./'});
+    await navigator.serviceWorker.ready;
+    $('swState').textContent=swReg.active?'Active':'Registered';
+    await record('service-worker-ready',{scope:swReg.scope,hasSync:!!swReg.sync,hasPeriodic:!!swReg.periodicSync});
+    navigator.serviceWorker.addEventListener('message',ev=>{
+      if(ev.data && ev.data.type==='OR_SW_EVENT'){
+        appendLog({at:ev.data.at||new Date().toISOString(),source:'service-worker',type:ev.data.eventType,detail:ev.data.detail||{}});
+        refreshLogs();
+      }
+    });
+  }catch(e){$('swState').textContent='فشل التسجيل';await record('service-worker-error',{message:String(e)});}
+}
+$('registerSw').onclick=registerSW;
+let deferredInstall=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;$('installBtn').disabled=false;});
+$('installBtn').onclick=async()=>{
+  if(!deferredInstall){await record('install-prompt-unavailable',{note:'Use browser menu → Install app / Add to Home screen'});return;}
+  deferredInstall.prompt(); const result=await deferredInstall.userChoice; await record('install-choice',{outcome:result.outcome});deferredInstall=null;$('installBtn').disabled=true;
+};
+let pageTimer=null, worker=null, pageTicks=0, workerTicks=0, workerJobs=0, startAt=0, endAt=0, runTimer=null, elapsedTimer=null;
+function updateRun(){
+  if(!startAt)return;
+  const sec=Math.floor((Date.now()-startAt)/1000); $('elapsed').textContent=String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');
+  const span=Math.max(1,endAt-startAt);$('runProgress').style.width=Math.min(100,((Date.now()-startAt)/span)*100)+'%';
+}
+function stopRun(reason){
+  clearInterval(pageTimer);clearInterval(elapsedTimer);clearTimeout(runTimer);pageTimer=null;elapsedTimer=null;runTimer=null;
+  if(worker){worker.postMessage({type:'stop'});worker.terminate();worker=null;}
+  $('startRun').disabled=false;$('stopRun').disabled=true;
+  record('load-stop',{reason,pageTicks,workerTicks,workerJobs},'page',true);
+}
+function startRun(){
+  if(pageTimer||worker)return;
+  pageTicks=0;workerTicks=0;workerJobs=0;startAt=Date.now();endAt=startAt+(Number($('duration').value)*1000);
+  $('pageTicks').textContent='0';$('workerTicks').textContent='0';$('workerJobs').textContent='0';$('startRun').disabled=true;$('stopRun').disabled=false;
+  pageTimer=setInterval(()=>{pageTicks++;$('pageTicks').textContent=pageTicks;$('pagePulse').textContent=new Date().toLocaleTimeString();if(pageTicks%5===0)record('page-pulse',{tick:pageTicks},'page',false);},1000);
+  try{
+    worker=new Worker('./probe-worker.js');
+    worker.onmessage=e=>{
+      if(e.data.type==='pulse'){workerTicks++;$('workerTicks').textContent=workerTicks;$('workerPulse').textContent=new Date().toLocaleTimeString();}
+      if(e.data.type==='job'){workerJobs++;$('workerJobs').textContent=workerJobs;record('worker-job',{job:e.data.job,durationMs:e.data.durationMs,checksum:e.data.checksum},'worker',false);}
+    };
+    worker.onerror=e=>record('worker-error',{message:e.message},'worker',true);
+    worker.postMessage({type:'start',intervalMs:1000,jobEveryMs:5000});
+  }catch(e){record('worker-start-failed',{message:String(e)});}
+  elapsedTimer=setInterval(updateRun,1000);runTimer=setTimeout(()=>stopRun('duration-complete'),Number($('duration').value)*1000);
+  updateRun();record('load-start',{durationSeconds:Number($('duration').value),visibility:document.visibilityState},'page',true);
+}
+$('startRun').onclick=startRun;$('stopRun').onclick=()=>stopRun('user-stop');
+$('pagePulseNow').onclick=()=>record('manual-page-pulse',{visibility:document.visibilityState},'page',true);
+$('workerPulseNow').onclick=()=>{if(worker)worker.postMessage({type:'pulse-now'});else record('worker-not-running',{});};
+navigator.serviceWorker && navigator.serviceWorker.addEventListener('controllerchange',()=>{$('swState').textContent='Controlling';record('service-worker-controllerchange',{});});
+document.addEventListener('visibilitychange',()=>{lifecycleState=document.visibilityState==='visible'?'active':'hidden';$('visibility').textContent=document.visibilityState;$('lifecycle').textContent=lifecycleState;record('visibilitychange',{state:document.visibilityState},'page',true);});
+document.addEventListener('freeze',()=>{lifecycleState='frozen';$('lifecycle').textContent=lifecycleState;record('freeze',{},'page',true);});
+document.addEventListener('resume',()=>{lifecycleState=document.visibilityState==='visible'?'active':'hidden';$('lifecycle').textContent='resumed/'+lifecycleState;record('resume',{},'page',true);});
+window.addEventListener('pagehide',e=>record('pagehide',{persisted:e.persisted},'page',true));
+window.addEventListener('pageshow',e=>record('pageshow',{persisted:e.persisted,wasDiscarded:!!document.wasDiscarded},'page',true));
+window.addEventListener('beforeunload',()=>{try{navigator.sendBeacon('./api/witness',new Blob([JSON.stringify({eventId:uuid(),nodeId,source:'page',type:'beforeunload',at:new Date().toISOString(),detail:{}})],{type:'application/json'}));}catch(e){}});
+window.addEventListener('online',()=>record('online',{},'page',true));window.addEventListener('offline',()=>record('offline',{},'page',true));
+$('markPhase').onclick=()=>record('phase-mark',{phase:$('phase').value,visibility:document.visibilityState,wasDiscarded:!!document.wasDiscarded},'page',true);
+$('swProbe').onclick=async()=>{
+  if(!swReg) await registerSW();
+  if(swReg && swReg.active){swReg.active.postMessage({type:'OR_SW_LOG',eventType:'manual-sw-probe',detail:{from:'page',at:new Date().toISOString()}});record('sw-probe-sent',{},'page',true);}
+};
+$('registerSync').onclick=async()=>{
+  try{
+    if(!swReg)await registerSW();
+    if(!swReg || !swReg.sync)throw new Error('SyncManager is not available in this browser');
+    await swReg.sync.register('or-persistence-probe');
+    await record('background-sync-registered',{tag:'or-persistence-probe'},'page',true);
+    alert('تم تسجيل Background Sync. موعد التنفيذ يحدده المتصفح.');
+  }catch(e){await record('background-sync-register-failed',{message:String(e)},'page',true);alert('لم يتم التسجيل: '+e.message);}
+};
+$('registerPeriodic').onclick=async()=>{
+  try{
+    if(!swReg)await registerSW();
+    if(!swReg || !swReg.periodicSync)throw new Error('Periodic Background Sync is not available');
+    let permission='unknown';
+    try{const p=await navigator.permissions.query({name:'periodic-background-sync'});permission=p.state;}catch(e){}
+    await swReg.periodicSync.register('or-persistence-periodic',{minInterval:15*60*1000});
+    await record('periodic-sync-registered',{minIntervalMs:900000,permission},'page',true);
+    alert('تم طلب Periodic Sync. المتصفح يحدد ما إذا كان ومتى ينفذه.');
+  }catch(e){await record('periodic-sync-register-failed',{message:String(e)},'page',true);alert('لم يتم التسجيل: '+e.message);}
+};
+$('refreshLogs').onclick=async()=>{const all=await refreshLogs();$('log').innerHTML='';all.slice(-200).forEach(appendLog);};
+$('exportLogs').onclick=async()=>{
+  const all=await refreshLogs();const payload={exportedAt:new Date().toISOString(),nodeId,userAgent:navigator.userAgent,platform:navigator.platform,wasDiscarded:!!document.wasDiscarded,events:all};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='openrag-persistence-'+nodeId+'.json';a.click();URL.revokeObjectURL(a.href);
+};
+$('clearLogs').onclick=async()=>{
+  if(!confirm('مسح كل سجلات المختبر المحفوظة في هذا المتصفح؟'))return;
+  const d=await db();await new Promise((resolve,reject)=>{const tx=d.transaction('events','readwrite');tx.objectStore('events').clear();tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});$('log').innerHTML='';await refreshLogs();
+};
+let peer=null, peerConn=null, monitorTimer=null, pending=new Map(), pongOk=0, pongMiss=0;
+function peerState(t,k){setPill('peerState',t,k);}
+function attachConnection(c){
+  if(peerConn && peerConn.open){c.close();return;}
+  peerConn=c;
+  c.on('open',()=>{peerState('متصل','ok');$('monitorPeer').disabled=false;record('p2p-open',{peer:c.peer},'p2p',true);});
+  c.on('data',data=>{
+    if(!data || typeof data!=='object')return;
+    if(data.type==='OR_WITNESS_PING'){c.send({type:'OR_WITNESS_PONG',id:data.id,at:data.at,receivedAt:Date.now()});}
+    if(data.type==='OR_WITNESS_PONG'){
+      const item=pending.get(data.id);if(item){clearTimeout(item.timer);pending.delete(data.id);pongOk++;$('lastPong').textContent=(Date.now()-item.sentAt)+' ms';$('pongCounts').textContent=pongOk+' / '+pongMiss;}
+    }
+  });
+  c.on('close',()=>{peerState('انقطع','bad');record('p2p-closed',{},'p2p',true);if(peerConn===c)peerConn=null;$('monitorPeer').disabled=true;stopMonitor();});
+  c.on('error',e=>record('p2p-error',{message:String(e)},'p2p',true));
+}
+function initPeer(){
+  if(!window.Peer){$('peerId').textContent='PeerJS CDN غير متاح';record('peerjs-unavailable',{});return;}
+  try{
+    peer=new Peer(undefined,{debug:0,config:{iceServers:[{urls:'stun:stun.l.google.com:19302'},{urls:'stun:stun.cloudflare.com:3478'}]}});
+    peer.on('open',id=>{$('peerId').textContent=id;record('peer-ready',{peerId:id},'p2p',true);});
+    peer.on('connection',attachConnection);
+    peer.on('error',e=>record('peer-error',{type:e.type,message:e.message},'p2p',true));
+  }catch(e){record('peer-init-failed',{message:String(e)});}
+}
+$('connectPeer').onclick=()=>{
+  const id=$('remoteId').value.trim();if(!peer||!id)return;
+  try{const c=peer.connect(id,{reliable:true});attachConnection(c);record('p2p-connecting',{peerId:id},'p2p',true);}catch(e){record('p2p-connect-error',{message:String(e)});}
+};
+function startMonitor(){
+  if(!peerConn||!peerConn.open||monitorTimer)return;
+  const send=()=>{
+    const id=uuid(),sentAt=Date.now();
+    const timer=setTimeout(()=>{if(pending.has(id)){pending.delete(id);pongMiss++;$('pongCounts').textContent=pongOk+' / '+pongMiss;record('p2p-timeout',{id,missed:pongMiss},'monitor',true);}},4200);
+    pending.set(id,{sentAt,timer});
+    try{peerConn.send({type:'OR_WITNESS_PING',id,at:sentAt});}catch(e){clearTimeout(timer);pending.delete(id);}
+  };
+  send();monitorTimer=setInterval(send,5000);$('monitorPeer').disabled=true;$('stopMonitor').disabled=false;record('remote-monitor-started',{intervalMs:5000},'monitor',true);
+}
+function stopMonitor(){clearInterval(monitorTimer);monitorTimer=null;for(const p of pending.values())clearTimeout(p.timer);pending.clear();$('monitorPeer').disabled=!peerConn||!peerConn.open;$('stopMonitor').disabled=true;}
+$('monitorPeer').onclick=startMonitor;$('stopMonitor').onclick=stopMonitor;
+$('disconnectPeer').onclick=()=>{stopMonitor();if(peerConn)peerConn.close();if(peer)peer.destroy();peer=null;peerConn=null;peerState('غير متصل','');$('peerId').textContent='تم قطع الجلسة';initPeer();};
+(async()=>{
+  await checkCapabilities();
+  await registerSW();
+  await refreshLogs();
+  initPeer();
+  await record('lab-boot',{version:'0.3.0',visibility:document.visibilityState,wasDiscarded:!!document.wasDiscarded,serviceWorker:'serviceWorker'in navigator},'page',true);
+  if(document.wasDiscarded)record('page-restored-after-discard',{wasDiscarded:true},'page',true);
+})();
+})();
+</script>
+</body></html>
