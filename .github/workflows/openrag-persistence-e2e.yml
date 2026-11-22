@@ -1,0 +1,43 @@
+name: OpenRAG Persistence E2E
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'persistence-lab/**'
+      - '.github/workflows/openrag-persistence-e2e.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-matrix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install test dependencies
+        run: |
+          npm install --no-save @playwright/test
+          npx playwright install --with-deps ${{ matrix.browser }}
+      - name: Run browser lifecycle smoke tests
+        env:
+          OPENRAG_BASE_URL: https://openrag-persistence-lab.vercel.app
+          BROWSER: ${{ matrix.browser }}
+        run: npx playwright test persistence-lab/tests/persistence.spec.js --reporter=line
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: persistence-${{ matrix.browser }}-report
+          path: test-results/
+          if-no-files-found: ignore
